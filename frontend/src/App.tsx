@@ -1,8 +1,7 @@
-// src/App.tsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HeroPage from './components/hero/HeroPage';
-// import Layout from './components/common/Layout';
+import Layout from './components/common/Layout';
 // import Dashboard from './components/dashboard/Dashboard';
 // import CreditCardPage from './components/credit-card/CreditCardPage';
 // import BankingPage from './components/banking/BankingPage';
@@ -11,7 +10,18 @@ import HeroPage from './components/hero/HeroPage';
 // import SettingsPage from './components/settings/SettingsPage';
 import './App.css';
 
+import TestLayout from './TestLayout'
+
+function NotFound() {
+  return (
+    <h1>
+      404 - Page Not Found
+    </h1>
+  )
+}
+
 function App() {
+  // return <TestLayout/>
   return (
     <Router>
       <Routes>
@@ -25,6 +35,9 @@ function App() {
         <Route path="/banking/checking" element={<Layout><CheckingPage /></Layout>} />
         <Route path="/banking/investment" element={<Layout><InvestmentPage /></Layout>} />
         <Route path="/settings" element={<Layout><SettingsPage /></Layout>} /> */}
+
+        {/* 404 catch-all route */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );

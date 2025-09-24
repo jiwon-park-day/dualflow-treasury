@@ -1,4 +1,3 @@
-// src/components/hero/HeroPage.tsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRightIcon, ChartBarIcon, CurrencyDollarIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
