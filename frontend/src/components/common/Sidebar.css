@@ -1,0 +1,132 @@
+/* src/components/common/Sidebar.css */
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 256px;
+  background-color: white;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-right: 1px solid #e5e7eb;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  height: 64px;
+  padding: 0 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sidebar-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #111827;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 16px;
+}
+
+.nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-item {
+  
+}
+
+.nav-link-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  color: #6b7280;
+  flex: 1; /* Take remaining space, leaving room for chevron */
+}
+
+.nav-link:hover {
+  background-color: #f9fafb;
+  color: #111827;
+}
+
+.nav-link.active {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border-right: 2px solid #3b82f6;
+}
+
+.nav-icon {
+  margin-right: 12px;
+  height: 20px;
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.nav-text {
+  flex: 1;
+}
+
+.nav-chevron-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  margin-left: 4px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.nav-chevron-button:hover {
+  background-color: #f3f4f6;
+}
+
+.nav-chevron {
+  height: 16px;
+  width: 16px;
+  color: #6b7280;
+}
+
+.sub-nav {
+  margin-left: 32px;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sub-nav-link {
+  display: block;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  color: #9ca3af;
+}
+
+.sub-nav-link:hover {
+  color: #374151;
+  background-color: #f9fafb;
+}
+
+.sub-nav-link.active {
+  color: #1d4ed8;
+  background-color: #eff6ff;
+}
