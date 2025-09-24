@@ -8,7 +8,7 @@ defmodule DualflowTreasury.Repo.Migrations.CreateTransactions do
       add :amount, :decimal, precision: 12, scale: 2
       add :merchant_id, :string, null: false
       add :description, :string
-      add :category, :string    # Application-level validation (Ecto.Enum)
+      add :category, :string
       add :is_recurring, :boolean, default: false
     end
 
