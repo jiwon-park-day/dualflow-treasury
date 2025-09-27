@@ -68,7 +68,7 @@ function CheckingPage() {
                 <button onClick={() => setIsEditing(false)} className="cancel-button">Cancel</button>
               </div>
             ) : (
-              <button onClick={() => setIsEditing(true)} className="edit-button">Edit</button>
+              <button onClick={() => setIsEditing(true)} className="update-button">Update</button>
             )}
           </div>
         </div>
