@@ -7,7 +7,7 @@ import CreditCardPage from './components/credit-card/CreditCardPage';
 import BankingPage from './components/banking/BankingPage';
 import CheckingPage from './components/banking/CheckingPage';
 import InvestmentPage from './components/banking/InvestmentPage';
-// import SettingsPage from './components/settings/SettingsPage';
+import SettingsPage from './components/settings/SettingsPage';
 import './App.css';
 
 import TestLayout from './TestLayout'
@@ -34,7 +34,7 @@ function App() {
         <Route path="/banking" element={<Layout><BankingPage /></Layout>} />
         <Route path="/banking/checking" element={<Layout><CheckingPage /></Layout>} />
         <Route path="/banking/investment" element={<Layout><InvestmentPage /></Layout>} />
-        {/* <Route path="/settings" element={<Layout><SettingsPage /></Layout>} /> */}
+        <Route path="/settings" element={<Layout><SettingsPage /></Layout>} />
 
         {/* 404 catch-all route */}
         <Route path="*" element={<NotFound />} />
