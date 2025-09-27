@@ -1,9 +1,24 @@
 .credit-card-page {
   max-width: 1280px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-.page-card {
+.cards-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 1024px) {
+  .cards-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.card {
   background-color: white;
   border-radius: 12px;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
@@ -11,41 +26,248 @@
   padding: 24px;
 }
 
-.page-title {
+.card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 28px;
+}
+
+/* Top row cards - Usage and Statements */
+.cards-grid .card:nth-child(1),
+.cards-grid .card:nth-child(2) {
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.cards-grid .card:nth-child(1) .card-title,
+.cards-grid .card:nth-child(2) .card-title {
+  margin-bottom: 32px;
+}
+
+/* Usage Card */
+.usage-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  justify-content: center;
+  flex: 1;
+}
+
+.usage-amounts {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.usage-label {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.usage-amount {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.usage-bar-container {
+  position: relative;
+  width: 100%;
+  height: 12px;
+  background-color: #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.usage-bar-fill {
+  height: 100%;
+  background-color: #3b82f6;
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.usage-percentage {
+  text-align: center;
+  margin-top: 8px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Statements Card */
+.statements-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.statement-section {
+  padding: 16px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+}
+
+.statement-header {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.statement-details {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.statement-item {
+  flex: 1;
+}
+
+.statement-value {
   font-size: 20px;
   font-weight: 600;
   color: #111827;
-  margin-bottom: 16px;
+  margin-bottom: 4px;
 }
 
-.page-description {
+.statement-label {
+  font-size: 12px;
   color: #6b7280;
-  margin-bottom: 24px;
 }
 
-.placeholder-grid {
+/* Spending Categories Card */
+.categories-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-container {
+  width: 100%;
+  height: 400px;
+  display: flex;
+  justify-content: center;
+  margin: -10px 0;
+}
+
+.chart-legend {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  width: 100%;
 }
 
-.placeholder-item {
-  background-color: #f9fafb;
-  border-radius: 8px;
-  padding: 16px;
-  height: 128px;
+.legend-item {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
 }
 
-.placeholder-text {
-  color: #9ca3af;
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+/* Recent Activity Card */
+
+.activity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.view-all-link {
   font-size: 14px;
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s ease;
 }
 
-@media (max-width: 768px) {
-  .placeholder-grid {
+.view-all-link:hover {
+  color: #2563eb;
+}
+
+.transactions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.transaction-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.transaction-item:last-child {
+  border-bottom: none;
+}
+
+.transaction-left {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex: 1;
+}
+
+.transaction-date {
+  font-size: 12px;
+  color: #6b7280;
+  min-width: 40px;
+}
+
+.transaction-merchant {
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 2px;
+}
+
+.transaction-category {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.transaction-amount {
+  font-size: 16px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.transaction-amount.positive {
+  color: #059669 !important;
+}
+
+.transaction-amount.negative {
+  color: #111827 !important;
+  /* color: #111827; */
+
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .transaction-left {
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+  
+  .transaction-date {
+    min-width: auto;
+  }
+  
+  .chart-legend {
     grid-template-columns: 1fr;
   }
 }
