@@ -1,4 +1,3 @@
-// src/components/credit-card/CreditCardPage.tsx
 import React from 'react';
 import './CreditCardPage.css';
 

@@ -1,4 +1,4 @@
-.credit-card-page {
+.checking-page {
   max-width: 1280px;
   margin: 0 auto;
 }
@@ -23,17 +23,23 @@
   margin-bottom: 24px;
 }
 
-.placeholder-grid {
+.content-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: 1fr;
   gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .content-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .placeholder-item {
   background-color: #f9fafb;
   border-radius: 8px;
   padding: 16px;
-  height: 128px;
+  height: 160px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -42,10 +48,4 @@
 .placeholder-text {
   color: #9ca3af;
   font-size: 14px;
-}
-
-@media (max-width: 768px) {
-  .placeholder-grid {
-    grid-template-columns: 1fr;
-  }
 }
