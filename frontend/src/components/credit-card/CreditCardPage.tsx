@@ -161,7 +161,7 @@ function CreditCardPage() {
         <div className="card">
           <div className="activity-header">
             <h3 className="card-title">Recent Activity</h3>
-            <a href="#" className="view-all-link">View All</a>
+            <a href="#" className="view-all-link">View All{' >'}</a>
           </div>
           <div className="transactions-list">
             <div className="transaction-item">
