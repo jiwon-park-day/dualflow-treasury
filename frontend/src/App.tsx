@@ -8,17 +8,10 @@ import BankingPage from './components/banking/BankingPage';
 import CheckingPage from './components/banking/CheckingPage';
 import InvestmentPage from './components/banking/InvestmentPage';
 import SettingsPage from './components/settings/SettingsPage';
+import NotFound from './components/common/NotFound';
 import './App.css';
 
 import TestLayout from './TestLayout'
-
-function NotFound() {
-  return (
-    <h1>
-      404 - Page Not Found
-    </h1>
-  )
-}
 
 function App() {
   // return <TestLayout/>
