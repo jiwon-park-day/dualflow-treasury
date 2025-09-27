@@ -1,0 +1,53 @@
+/* src/components/credit-card/CreditCardPage.css */
+
+.credit-card-page {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.page-card {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  padding: 24px;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 16px;
+}
+
+.page-description {
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.placeholder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.placeholder-item {
+  background-color: #f9fafb;
+  border-radius: 8px;
+  padding: 16px;
+  height: 128px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder-text {
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .placeholder-grid {
+    grid-template-columns: 1fr;
+  }
+}
