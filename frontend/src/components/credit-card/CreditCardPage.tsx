@@ -89,7 +89,7 @@ function CreditCardPage() {
               <div className="statement-details">
                 <div className="statement-item">
                   <div className="statement-value">{formatCurrency(currentBalance)}</div>
-                  <div className="statement-label">Current Balance</div>
+                  <div className="statement-label">Since Last Statement</div>
                 </div>
                 <div className="statement-item">
                   <div className="statement-value">Oct 15</div>
