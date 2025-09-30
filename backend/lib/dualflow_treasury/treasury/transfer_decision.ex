@@ -15,16 +15,32 @@ defmodule DualflowTreasury.Treasury.TransferDecision do
 
   def changeset(decision, attrs) do
     decision
-    |> cast(attrs, [:date, :amount, :predicted_bills_amount, :target_balance, :from_account_id, :to_account_id, :dest_transaction_id])
-    |> validate_required([:date, :amount, :predicted_bills_amount, :target_balance, :from_account_id, :to_account_id, :dest_transaction_id])
-    |> validate_number(:amount, greater_than: 0)  # Always transfer positive amount from/to accounts
+    |> cast(attrs, [
+      :date,
+      :amount,
+      :predicted_bills_amount,
+      :target_balance,
+      :from_account_id,
+      :to_account_id,
+      :dest_transaction_id
+    ])
+    |> validate_required([
+      :date,
+      :amount,
+      :predicted_bills_amount,
+      :target_balance,
+      :from_account_id,
+      :to_account_id,
+      :dest_transaction_id
+    ])
+    |> validate_number(:amount, greater_than: 0)    # Always transfer positive amount from/to accounts
     |> validate_number(:predicted_bills_amount, greater_than_or_equal_to: 0)
     |> validate_number(:target_balance, greater_than_or_equal_to: 0)
     |> validate_different_accounts()
     |> foreign_key_constraint(:from_account_id)
     |> foreign_key_constraint(:to_account_id)
     |> foreign_key_constraint(:dest_transaction_id)
-    |> unique_constraint(:dest_transaction_id)  # 1 to 1
+    |> unique_constraint(:dest_transaction_id)    # 1 to 1
     |> unique_constraint([:date, :from_account_id])
     |> unique_constraint([:date, :to_account_id])
   end
@@ -39,5 +55,4 @@ defmodule DualflowTreasury.Treasury.TransferDecision do
       changeset
     end
   end
-
 end
