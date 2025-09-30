@@ -3,9 +3,9 @@ defmodule DualflowTreasury.Billing.RecurringBillHistory do
   import Ecto.Changeset
 
   schema "recurring_bill_history" do
-    field(:actual_amount, :decimal)
-    field(:predicted_amount, :decimal)
-    field(:prediction_error, :decimal)
+    field :actual_amount, :decimal
+    field :predicted_amount, :decimal
+    field :prediction_error, :decimal
 
     belongs_to :bill, DualflowTreasury.Billing.RecurringBill
     belongs_to :transaction, DualflowTreasury.Treasury.Transaction
