@@ -28,7 +28,7 @@ defmodule DualflowTreasury.Billing.RecurringBillHistory do
   defp validate_predicted_amount(changeset) do
     case get_field(changeset, :predicted_amount) do
       nil -> changeset
-      amount -> validate_number(changeset, :predicted_amount, greater_than: 0)
+      _amount -> validate_number(changeset, :predicted_amount, greater_than: 0)
     end
   end
 

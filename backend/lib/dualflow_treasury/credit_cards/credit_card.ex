@@ -43,14 +43,14 @@ defmodule DualflowTreasury.CreditCards.CreditCard do
   defp validate_min_payment(changeset) do
     case get_field(changeset, :min_payment) do
       nil -> changeset
-      amount -> validate_number(changeset, :min_payment, greater_than_or_equal_to: 0)
+      _amount -> validate_number(changeset, :min_payment, greater_than_or_equal_to: 0)
     end
   end
 
   defp validate_apr(changeset) do
     case get_field(changeset, :apr) do
       nil -> changeset
-      apr -> validate_number(changeset, :apr, greater_than_or_equal_to: 0, less_than_or_equal_to: 1)
+      _apr -> validate_number(changeset, :apr, greater_than_or_equal_to: 0, less_than_or_equal_to: 1)
     end
   end
 end
