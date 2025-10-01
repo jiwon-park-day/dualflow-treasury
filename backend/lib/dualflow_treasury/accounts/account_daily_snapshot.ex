@@ -3,10 +3,10 @@ defmodule DualflowTreasury.Accounts.AccountDailySnapshot do
   import Ecto.Changeset
 
   schema "account_daily_snapshots" do
-    field(:date, :date)
-    field(:ending_balance, :decimal)
-    field(:interest_earned, :decimal)
-    field(:cumulative_interest, :decimal)
+    field :date, :date
+    field :ending_balance, :decimal
+    field :interest_earned, :decimal
+    field :cumulative_interest, :decimal
 
     belongs_to :account, DualflowTreasury.Accounts.Account
   end

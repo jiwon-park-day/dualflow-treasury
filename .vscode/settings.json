@@ -1,4 +1,5 @@
 {
     "explorer.openEditors.sortOrder": "editorOrder",
-    "explorer.sortOrder": "default"
+    "explorer.sortOrder": "default",
+    "elixirLS.projectDir": "./backend"
 }
