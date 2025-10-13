@@ -4,7 +4,7 @@ defmodule DualflowTreasury.Accounts.Account do
 
   schema "accounts" do
     field :account_type, Ecto.Enum, values: [:checking, :investment]
-    field :current_balance, :decimal, default: 0.00
+    field :current_balance, :decimal, default: Decimal.new("0.00")
     field :interest_rate, :decimal
 
     belongs_to :customer, DualflowTreasury.Customers.Customer
