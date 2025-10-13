@@ -4,8 +4,8 @@ defmodule DualflowTreasury.CreditCards.CreditCard do
 
   schema "credit_cards" do
     field :card_name, :string
-    field :current_balance, :decimal, default: 0.00
-    field :statement_balance, :decimal, default: 0.00
+    field :current_balance, :decimal, default: Decimal.new("0.00")
+    field :statement_balance, :decimal, default: Decimal.new("0.00")
     field :credit_limit, :decimal
     field :statement_closing_day, :integer
     field :payment_due_day, :integer
