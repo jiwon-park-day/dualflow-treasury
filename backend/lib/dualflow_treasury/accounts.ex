@@ -8,13 +8,6 @@ defmodule DualflowTreasury.Accounts do
   - Daily compound interest calculations
   - Daily account snapshots
   - Monthly interest payment processing
-
-
-
-
-
-
-
   """
 
   import Ecto.Query, warn: false
@@ -26,13 +19,6 @@ defmodule DualflowTreasury.Accounts do
 
   @doc """
   Gets an account by ID.
-
-
-
-
-
-
-
   """
   def get_account(account_id) do
     case Repo.get(Account, account_id) do
@@ -50,13 +36,6 @@ defmodule DualflowTreasury.Accounts do
 
   @doc """
   Creates both investment and checking accounts for a customer.
-
-
-
-
-
-
-
   """
   def create_customer_accounts(customer_id) do
     with {:ok, investment} <- create_customer_investment_account(customer_id),
@@ -67,13 +46,6 @@ defmodule DualflowTreasury.Accounts do
 
   @doc """
   Creates an investment account with 5.00% APY.
-
-
-
-
-
-
-
   """
   def create_customer_investment_account(customer_id) do
     investment_attrs = %{
@@ -87,13 +59,6 @@ defmodule DualflowTreasury.Accounts do
 
   @doc """
   Creates a checking account with 2.50% APY.
-
-
-
-
-
-
-
   """
   def create_customer_checking_account(customer_id) do
     checking_attrs = %{
@@ -108,13 +73,6 @@ defmodule DualflowTreasury.Accounts do
   @doc """
   Gets all accounts for a customer.
   Returns a list of accounts.
-
-
-
-
-
-
-
   """
   def get_customer_accounts(customer_id) do
     accounts =
@@ -127,13 +85,6 @@ defmodule DualflowTreasury.Accounts do
 
   @doc """
   Gets the investment account for a customer.
-
-
-
-
-
-
-
   """
   def get_customer_investment_account(customer_id) do
     case Repo.one(
@@ -147,13 +98,6 @@ defmodule DualflowTreasury.Accounts do
 
   @doc """
   Gets the checking account for a customer.
-
-
-
-
-
-
-
   """
   def get_customer_checking_account(customer_id) do
     case Repo.one(
@@ -167,13 +111,6 @@ defmodule DualflowTreasury.Accounts do
 
   @doc """
   Gets the current balance for an account.
-
-
-
-
-
-
-
   """
   def get_account_balance(account_id) do
     case Repo.get(Account, account_id) do
@@ -184,13 +121,6 @@ defmodule DualflowTreasury.Accounts do
 
   @doc """
   Updates an account's balance to a new value.
-
-
-
-
-
-
-
   """
   def update_account_balance(account_id, new_balance) do
     case Repo.get(Account, account_id) do
@@ -207,13 +137,6 @@ defmodule DualflowTreasury.Accounts do
   @doc """
   Adjusts an account's balance by the given amount.
   Amount can be positive (deposit) or negative (withdrawal).
-
-
-
-
-
-
-
   """
   def adjust_account_balance(account_id, adjustment_amount) do
     case Repo.get(Account, account_id) do
@@ -239,13 +162,6 @@ defmodule DualflowTreasury.Accounts do
 
   ## Future Enhancement
   Will create transaction records for audit trail.
-
-
-
-
-
-
-
   """
   def transfer_funds(from_account_id, to_account_id, transfer_amount) do
     if Decimal.compare(transfer_amount, Decimal.new("0.00")) == :lt do
@@ -279,13 +195,6 @@ defmodule DualflowTreasury.Accounts do
 
   @doc """
   Gets the interest rate for an account.
-
-
-
-
-
-
-
   """
   def get_account_interest_rate(account_id) do
     with {:ok, account} <- get_account(account_id) do
@@ -300,13 +209,6 @@ defmodule DualflowTreasury.Accounts do
   - Current ending balance
   - Cumulative interest from previous day
   - Annual interest rate divided by 365
-
-
-
-
-
-
-
   """
   def calculate_account_daily_interest(account_id, date) do
     with {:ok, ending_balance} <- get_account_balance(account_id),
@@ -358,13 +260,6 @@ defmodule DualflowTreasury.Accounts do
 
   @doc """
   Gets a daily snapshot by account ID and date.
-
-
-
-
-
-
-
   """
   def get_account_daily_snapshot(account_id, date) do
     case Repo.get_by(AccountDailySnapshot, %{account_id: account_id, date: date}) do
@@ -378,13 +273,6 @@ defmodule DualflowTreasury.Accounts do
 
   Called at midnight (date + 1) when the ending balance is finalized.
   Cumulative interest resets to 0 on the 1st of each month after payment processing.
-
-
-
-
-
-
-
   """
   def create_account_daily_snapshot(account_id, date) do
     with {:ok, balance} <- get_account_balance(account_id),
@@ -446,13 +334,6 @@ defmodule DualflowTreasury.Accounts do
 
   ## Example
       process_account_monthly_interest_payment(123, ~D[2025-09-30], ~D[2025-10-01])
-
-
-
-
-
-
-
   """
   def process_account_monthly_interest_payment(account_id, period_end_date, payment_date) do
     if payment_date.day != 1 do
@@ -496,13 +377,6 @@ defmodule DualflowTreasury.Accounts do
   @doc """
   Gets all interest payments for an account within a date range.
   Returns a list of interest payment records.
-
-
-
-
-
-
-
   """
   def get_account_interest_payments(account_id, start_date, end_date) do
     payments =
