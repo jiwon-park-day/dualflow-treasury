@@ -159,9 +159,6 @@ defmodule DualflowTreasury.Accounts do
 
   Validates sufficient funds and updates both account balances atomically
   within a transaction.
-
-  ## Future Enhancement
-  Will create transaction records for audit trail.
   """
   def transfer_funds(from_account_id, to_account_id, transfer_amount) do
     if Decimal.compare(transfer_amount, Decimal.new("0.00")) == :lt do
