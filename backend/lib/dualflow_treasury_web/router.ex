@@ -14,16 +14,33 @@ defmodule DualflowTreasuryWeb.Router do
     plug :accepts, ["json"]
   end
 
+  # Browser
   scope "/", DualflowTreasuryWeb do
     pipe_through :browser
-
     get "/", PageController, :home
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", DualflowTreasuryWeb do
-  #   pipe_through :api
-  # end
+  # API
+  scope "/api", DualflowTreasuryWeb do
+    pipe_through :api
+
+    # Customers
+
+    # Accounts
+
+    # Treasury
+
+    # Billing
+
+    # CreditCards
+
+
+  end
+
+  # Simulator (Admin-only)
+  scope "/api/admin/simulator", DualflowTreasuryWeb do
+    pipe_through :api
+  end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:dualflow_treasury, :dev_routes) do
