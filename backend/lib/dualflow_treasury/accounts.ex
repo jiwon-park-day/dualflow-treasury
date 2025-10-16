@@ -4,7 +4,6 @@ defmodule DualflowTreasury.Accounts do
 
   Handles:
   - Account operations
-  - Fund transfers between accounts
   - Daily compound interest calculations
   - Daily account snapshots
   - Monthly interest payment processing
@@ -75,12 +74,10 @@ defmodule DualflowTreasury.Accounts do
   Returns a list of accounts.
   """
   def get_customer_accounts(customer_id) do
-    accounts =
-      Account
-      |> where(customer_id: ^customer_id)
-      |> Repo.all()
-
-    {:ok, accounts}
+    with {:ok, investment} <- get_customer_investment_account(customer_id),
+         {:ok, checking} <- get_customer_checking_account (customer_id) do
+      {:ok, %{investment: investment, checking: checking}}
+    end
   end
 
   @doc """
@@ -106,6 +103,15 @@ defmodule DualflowTreasury.Accounts do
          ) do
       nil -> {:error, :checking_account_not_found}
       account -> {:ok, account}
+    end
+  end
+
+  @doc """
+  Gets the account type for an account.
+  """
+  def get_account_type(account_id) do
+    with {:ok, account} <- get_account(account_id) do
+      {:ok, account.account_type}
     end
   end
 
@@ -149,42 +155,6 @@ defmodule DualflowTreasury.Accounts do
         account
         |> Account.changeset(%{current_balance: new_balance})
         |> Repo.update()
-    end
-  end
-
-  # Transfers
-
-  @doc """
-  Transfers funds from one account to another.
-
-  Validates sufficient funds and updates both account balances atomically
-  within a transaction.
-  """
-  def transfer_funds(from_account_id, to_account_id, transfer_amount) do
-    if Decimal.compare(transfer_amount, Decimal.new("0.00")) == :lt do
-      {:error, :invalid_transfer_amount}
-    else
-      Repo.transaction(fn ->
-        with {:ok, from_balance} <- get_account_balance(from_account_id),
-             {:ok, _to_balance} <- get_account_balance(to_account_id),
-             {:ok, :sufficient_funds} <- validate_sufficient_funds(from_balance, transfer_amount),
-             {:ok, from_account} <-
-               adjust_account_balance(from_account_id, Decimal.mult(transfer_amount, -1)),
-             {:ok, to_account} <- adjust_account_balance(to_account_id, transfer_amount) do
-          %{from_account: from_account, to_account: to_account, transfer_amount: transfer_amount}
-        else
-          {:error, reason} -> Repo.rollback(reason)
-        end
-      end)
-    end
-  end
-
-  # Validates that the balance is sufficient for the transfer amount.
-  defp validate_sufficient_funds(balance, amount) do
-    if Decimal.compare(balance, amount) in [:gt, :eq] do
-      {:ok, :sufficient_funds}
-    else
-      {:error, :insufficient_funds}
     end
   end
 
@@ -274,6 +244,7 @@ defmodule DualflowTreasury.Accounts do
   def create_account_daily_snapshot(account_id, date) do
     with {:ok, balance} <- get_account_balance(account_id),
          {:ok, daily_interest} <- calculate_account_daily_interest(account_id, date) do
+
       prev_cumulative =
         if date.day == 1 do
           period_end_date = Date.add(date, -1)
