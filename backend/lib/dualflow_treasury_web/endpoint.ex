@@ -50,5 +50,14 @@ defmodule DualflowTreasuryWeb.Endpoint do
   plug Plug.MethodOverride
   plug Plug.Head
   plug Plug.Session, @session_options
+
+  # CORS config
+  plug CORSPlug,
+  origin: ["http://localhost:3000"],  # Your React dev server
+  credentials: true,
+  headers: ["Content-Type", "Authorization"]
+
+plug DualflowTreasuryWeb.Router
+
   plug DualflowTreasuryWeb.Router
 end
