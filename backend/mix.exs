@@ -70,7 +70,8 @@ defmodule DualflowTreasury.MixProject do
       {:oban, "~> 2.15"},           # Job scheduling
       {:decimal, "~> 2.0"},         # Precise decimal calculations
       {:bcrypt_elixir, "~> 3.0"},   # Password hashing
-      {:cors_plug, "~> 3.0"}        # CORS for frontend
+      {:cors_plug, "~> 3.0"},        # CORS for frontend
+      {:nimble_csv, "~> 1.2"}
     ]
   end
 

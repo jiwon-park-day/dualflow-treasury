@@ -8,6 +8,7 @@ defmodule DualflowTreasury.Treasury do
   - Daily optimization decisions
   - Transaction history and auditing
 
+
   """
 
   import Ecto.Query, warn: false
@@ -15,6 +16,54 @@ defmodule DualflowTreasury.Treasury do
   alias DualflowTreasury.Repo
   alias DualflowTreasury.{Accounts, Billing, Customers}
   alias DualflowTreasury.Treasury.{Transaction, TransferDecision}
+  alias NimbleCSV.RFC4180, as: CSV
+
+  # Data import & parse
+
+  def import_historical_transactions(customer_id, csv_path) do
+    Repo.transaction(fn ->
+      with {:ok, checking} <- Accounts.get_customer_checking_account(customer_id),
+           {:ok, transaction_list} <- parse_transaction_csv(csv_path) do
+        transaction_list
+        |> Enum.sort_by(& &1.date)
+        |> Enum.reduce_while([], fn txn_data, acc ->
+          txn_data = Map.put(txn_data, :account_id, checking.id)
+
+          case process_transaction(txn_data) do
+            {:ok, txn} -> {:cont, [txn | acc]}
+            {:error, reason} -> {:halt, {:error, reason}}
+          end
+        end)
+        |> case do
+          {:error, reason} -> Repo.rollback(reason)
+          transactions -> Enum.reverse(transactions)
+        end
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+  end
+
+  def parse_transaction_csv(csv_path) do
+    transaction_list =
+      csv_path
+      |> File.stream!()
+      |> CSV.parse_stream(skip_headers: false)
+
+      # Skip header row
+      |> Stream.drop(1)
+      |> Enum.map(fn [date, amount, merchant_id, description, category, is_recurring] ->
+        %{
+          date: Date.from_iso8601!(date),
+          amount: Decimal.new(amount),
+          merchant_id: merchant_id,
+          description: description,
+          category: category,
+          is_recurring: is_recurring == "true" || is_recurring == "TRUE"
+        }
+      end)
+    {:ok, transaction_list}
+  end
 
   # Transactions
 
@@ -36,12 +85,23 @@ defmodule DualflowTreasury.Treasury do
     end
   end
 
-  def process_transaction(transaction) do
-    # Create transaction
+  def process_transaction(transaction_data) do
+    Repo.transaction(fn ->
+      with {:ok, transaction} <- create_transaction(transaction_data),
+           {:ok, _checking} <-
+             Accounts.adjust_account_balance(transaction.account_id, transaction.amount),
+           {:ok, _} <- maybe_process_recurring(transaction) do
+        transaction
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+  end
 
-    # Update account balance (Accounts)
+  defp maybe_process_recurring(%{is_recurring: false}), do: {:ok, :not_recurring}
 
-    # If recurring (Billing)
+  defp maybe_process_recurring(transaction) do
+    Billing.process_recurring_bill(transaction)
   end
 
   defp get_transaction(transaction_id) do
@@ -60,7 +120,7 @@ defmodule DualflowTreasury.Treasury do
     {:ok, transactions}
   end
 
-  def get_account_transactions(account_id, start_date, end_date) do
+  def get_account_transactions_by_date_range(account_id, start_date, end_date) do
     transactions =
       Transaction
       |> where(account_id: ^account_id)
@@ -70,8 +130,15 @@ defmodule DualflowTreasury.Treasury do
     {:ok, transactions}
   end
 
+  def get_account_transactions_by_category(account_id, category) do
+    transactions =
+      Transaction
+      |> where(account_id: ^account_id)
+      |> where([t], t.category == ^category)
+      |> Repo.all()
 
-
+    {:ok, transactions}
+  end
 
   # Transfer decisions
 
@@ -145,9 +212,10 @@ defmodule DualflowTreasury.Treasury do
                is_recurring: false,
                account_id: from_account_id
              }),
+           # For pending
            {:ok, to_transaction} <-
              create_transaction(%{
-               date: nil, # For pending
+               date: nil,
                amount: amount,
                merchant_id: "INTERNAL_TRANSFER",
                description: "Transfer from optimization",
@@ -182,6 +250,4 @@ defmodule DualflowTreasury.Treasury do
       end
     end)
   end
-
-  # Data import
 end
