@@ -71,7 +71,7 @@ defmodule DualflowTreasury.Billing do
     |> Repo.insert()
   end
 
-  def create_recurring_bill_from_transaction(transaction) do
+  defp create_recurring_bill_from_transaction(transaction) do
     attrs = %{
       account_id: transaction.account_id,
       merchant_id: transaction.merchant_id,
@@ -154,7 +154,6 @@ defmodule DualflowTreasury.Billing do
     {:ok, bills}
   end
 
-
   def get_account_recurring_bill(account_id, merchant_id, due_day) do
     case Repo.get_by(RecurringBill,
            account_id: account_id,
@@ -186,11 +185,68 @@ defmodule DualflowTreasury.Billing do
   # Bill prediction
 
   defp predict_bill_amount(bill_id) do
-    # Bill history
-    history = get_recurring_bill_history(bill_id)
+    {:ok, history} = get_recurring_bill_history(bill_id)
 
-    # Calculate
+    if length(history) < 2 do
+      {:error, :insufficient_history}
 
+    else
+      sorted_history = Enum.sort_by(history, & &1.inserted_at, :desc)
+
+      case sorted_history do
+        [latest | rest] when length(rest) >= 1 ->
+          [second | older] = rest
+
+          # 50% most recent, 30% second most recent
+          weighted_prediction =
+            latest.actual_amount
+            |> Decimal.mult(Decimal.new("0.5"))
+            |> Decimal.add(Decimal.mult(second.actual_amount, Decimal.new("0.3")))
+
+          # 20% weight to average of older payments
+          older_contribution =
+            if length(older) > 0 do
+              older_avg =
+                older
+                |> Enum.map(& &1.actual_amount)
+                |> Enum.reduce(&Decimal.add/2)
+                |> Decimal.div(length(older))
+
+              Decimal.mult(older_avg, Decimal.new("0.2"))
+            else
+              Decimal.new("0.00")
+            end
+
+          base_prediction = Decimal.add(weighted_prediction, older_contribution)
+
+          # Add recent under-prediction errors
+          recent_error_adjustment = calculate_recent_error_adjustment(sorted_history)
+          prediction = Decimal.add(base_prediction, recent_error_adjustment)
+
+          {:ok, prediction}
+      end
+    end
+  end
+
+  defp calculate_recent_error_adjustment(history) do
+    # Look at last 3 prediction errors, average positive ones only
+    recent_positive_errors =
+      history
+      |> Enum.take(3)
+      |> Enum.map(&(&1.prediction_error || Decimal.new("0.00")))
+      |> Enum.filter(&(Decimal.compare(&1, Decimal.new("0.00")) == :gt))
+
+    case recent_positive_errors do
+      [] ->
+        Decimal.new("0.00")
+
+      errors ->
+        errors
+        |> Enum.reduce(&Decimal.add/2)
+        |> Decimal.div(length(errors))
+        # 40% of recent avg under-prediction
+        |> Decimal.mult(Decimal.new("0.4"))
+    end
   end
 
   # Daily bill amount
@@ -206,6 +262,31 @@ defmodule DualflowTreasury.Billing do
       total_with_buffer = Decimal.add(base_total, safety_buffer)
 
       {:ok, total_with_buffer}
+    end
+  end
+
+  # Credit card bill
+
+  def create_credit_card_bill(account_id, merchant_id, statement_balance, payment_due_day) do
+    attrs = %{
+      account_id: account_id,
+      merchant_id: merchant_id,
+      description: "Credit Card Payment",
+      predicted_amount: statement_balance,
+      monthly_due_day: payment_due_day,
+      is_active: true
+    }
+
+    create_recurring_bill(attrs)
+  end
+
+  def update_credit_card_bill(account_id, merchant_id, statement_balance, payment_due_day) do
+    case get_account_recurring_bill(account_id, merchant_id, payment_due_day) do
+      {:error, :bill_not_found} ->
+        create_credit_card_bill(account_id, merchant_id, statement_balance, payment_due_day)
+
+      {:ok, bill} ->
+        update_recurring_bill(bill.id, %{predicted_amount: statement_balance})
     end
   end
 end
