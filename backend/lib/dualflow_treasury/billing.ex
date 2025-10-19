@@ -1,16 +1,13 @@
 defmodule DualflowTreasury.Billing do
   @moduledoc """
-  Context for recurring bill management and predictions
+  Context for recurring bill management and predictions.
 
   Handles:
-  - Recurring bill processing & tracking
+  - Recurring bill processing and tracking
   - Bill prediction algorithm
   - Bill history records
   - Daily bill amount calculations
-
-
-
-
+  - Credit card payment integration
   """
 
   import Ecto.Query, warn: false
@@ -21,6 +18,16 @@ defmodule DualflowTreasury.Billing do
 
   # Recurring bill processing
 
+  @doc """
+  Processes a recurring transaction by:
+  1. Finding or creating a recurring bill record
+  2. Activating the bill if inactive
+  3. Creating bill history entry
+  4. Updating bill predictions based on history
+
+  Called by Treasury.process_transaction when is_recurring = true.
+  All operations are wrapped in a database transaction for atomicity.
+  """
   def process_recurring_bill(transaction) do
     Repo.transaction(fn ->
       case get_account_recurring_bill(
@@ -65,12 +72,14 @@ defmodule DualflowTreasury.Billing do
 
   # Recurring bills
 
+  # Creates a recurring bill record in the database.
   defp create_recurring_bill(attrs) do
     %RecurringBill{}
     |> RecurringBill.changeset(attrs)
     |> Repo.insert()
   end
 
+  # Creates a new recurring bill from a transaction.
   defp create_recurring_bill_from_transaction(transaction) do
     attrs = %{
       account_id: transaction.account_id,
@@ -84,6 +93,7 @@ defmodule DualflowTreasury.Billing do
     create_recurring_bill(attrs)
   end
 
+  # Updates a recurring bill's attributes.
   defp update_recurring_bill(bill_id, attrs) do
     with {:ok, bill} <- get_recurring_bill(bill_id) do
       bill
@@ -92,14 +102,26 @@ defmodule DualflowTreasury.Billing do
     end
   end
 
+  @doc """
+  Activates a recurring bill.
+
+  Sets is_active to true, enabling the bill to be included in daily calculations.
+  """
   def activate_recurring_bill(bill_id) do
     update_recurring_bill(bill_id, %{is_active: true})
   end
 
+  @doc """
+  Deactivates a recurring bill.
+
+  Sets is_active to false without deleting the record.
+  Preserves bill history while excluding the bill from future calculations.
+  """
   def deactivate_recurring_bill(bill_id) do
     update_recurring_bill(bill_id, %{is_active: false})
   end
 
+  # Activates a bill only if currently inactive.
   defp maybe_activate_bill(bill) do
     if bill.is_active do
       {:ok, bill}
@@ -108,6 +130,7 @@ defmodule DualflowTreasury.Billing do
     end
   end
 
+  # Gets a recurring bill by ID.
   defp get_recurring_bill(bill_id) do
     case Repo.get(RecurringBill, bill_id) do
       nil -> {:error, :bill_not_found}
@@ -115,6 +138,11 @@ defmodule DualflowTreasury.Billing do
     end
   end
 
+  @doc """
+  Gets all recurring bills for an account.
+
+  Returns both active and inactive bills.
+  """
   def get_account_recurring_bills(account_id) do
     bills =
       RecurringBill
@@ -124,6 +152,11 @@ defmodule DualflowTreasury.Billing do
     {:ok, bills}
   end
 
+  @doc """
+  Gets all recurring bills for an account on a specific due day.
+
+  Returns both active and inactive bills.
+  """
   def get_account_recurring_bills(account_id, due_day) do
     bills =
       RecurringBill
@@ -134,6 +167,11 @@ defmodule DualflowTreasury.Billing do
     {:ok, bills}
   end
 
+  @doc """
+  Gets all active recurring bills for an account.
+
+  Filters to only bills where is_active = true.
+  """
   def get_account_active_recurring_bills(account_id) do
     bills =
       RecurringBill
@@ -143,6 +181,11 @@ defmodule DualflowTreasury.Billing do
     {:ok, bills}
   end
 
+  @doc """
+  Gets active recurring bills for an account on a specific due day.
+
+  Used by calculate_total_bill_amount to sum bills due on a given date.
+  """
   def get_account_active_recurring_bills(account_id, due_day) do
     bills =
       RecurringBill
@@ -154,6 +197,12 @@ defmodule DualflowTreasury.Billing do
     {:ok, bills}
   end
 
+  @doc """
+  Gets a specific recurring bill by account, merchant, and due day.
+
+  Used to identify bills uniquely, as the same merchant may have
+  multiple bills with different due dates.
+  """
   def get_account_recurring_bill(account_id, merchant_id, due_day) do
     case Repo.get_by(RecurringBill,
            account_id: account_id,
@@ -167,12 +216,20 @@ defmodule DualflowTreasury.Billing do
 
   # Bill history
 
+  # Creates a recurring bill history entry.
+  # Prediction error is calculated automatically in the schema changeset.
   defp create_recurring_bill_history(attrs) do
     %RecurringBillHistory{}
     |> RecurringBillHistory.changeset(attrs)
     |> Repo.insert()
   end
 
+  @doc """
+  Gets bill history for a specific recurring bill.
+
+  Returns all history entries ordered by insertion date.
+  History includes actual amounts, predictions, and prediction errors.
+  """
   def get_recurring_bill_history(bill_id) do
     history =
       RecurringBillHistory
@@ -184,6 +241,9 @@ defmodule DualflowTreasury.Billing do
 
   # Bill prediction
 
+  # Predicts the next bill amount based on historical data.
+  # Uses weighted average with recent emphasis (50/30/20) and error adjustment.
+  # Requires at least 2 history entries to make a prediction.
   defp predict_bill_amount(bill_id) do
     {:ok, history} = get_recurring_bill_history(bill_id)
 
@@ -228,6 +288,9 @@ defmodule DualflowTreasury.Billing do
     end
   end
 
+  # Calculates adjustment based on recent prediction errors.
+  # Only considers positive errors (under-predictions) to remain conservative.
+  # Returns 40% of the average recent under-prediction.
   defp calculate_recent_error_adjustment(history) do
     # Look at last 3 prediction errors, average positive ones only
     recent_positive_errors =
@@ -251,6 +314,16 @@ defmodule DualflowTreasury.Billing do
 
   # Daily bill amount
 
+  @doc """
+  Calculates total predicted bill amount for a specific date.
+
+  Includes:
+  - Sum of all active bills due on the given date
+  - 10% safety buffer applied to the total
+
+  Returns total amount needed for bills on the specified date.
+  Called by Treasury.make_daily_transfer_decision.
+  """
   def calculate_total_bill_amount(account_id, date) do
     with {:ok, bills} <- get_account_active_recurring_bills(account_id, date.day) do
       base_total =
@@ -267,6 +340,12 @@ defmodule DualflowTreasury.Billing do
 
   # Credit card bill
 
+  @doc """
+  Creates a credit card payment as a recurring bill.
+
+  Called by CreditCards context when a statement closes.
+  The merchant_id should be the credit card identifier.
+  """
   def create_credit_card_bill(account_id, merchant_id, statement_balance, payment_due_day) do
     attrs = %{
       account_id: account_id,
@@ -280,6 +359,12 @@ defmodule DualflowTreasury.Billing do
     create_recurring_bill(attrs)
   end
 
+  @doc """
+  Updates or creates a credit card payment recurring bill.
+
+  Called monthly when credit card statements close.
+  Updates the predicted amount to match the new statement balance.
+  """
   def update_credit_card_bill(account_id, merchant_id, statement_balance, payment_due_day) do
     case get_account_recurring_bill(account_id, merchant_id, payment_due_day) do
       {:error, :bill_not_found} ->
