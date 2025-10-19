@@ -3,12 +3,11 @@ defmodule DualflowTreasury.Treasury do
   Context for transaction processing and money movement.
 
   Handles:
+  - Historical transaction import
   - Transaction creation and processing
   - Transfer decision algorithm
-  - Daily optimization decisions
-  - Transaction history and auditing
-
-
+  - Two-phase transfer settlement
+  - Transaction history queries
   """
 
   import Ecto.Query, warn: false
@@ -20,6 +19,15 @@ defmodule DualflowTreasury.Treasury do
 
   # Data import & parse
 
+  @doc """
+  Imports historical transactions from a CSV file.
+
+  Processes transactions chronologically.
+  All transactions are wrapped in a single database transaction for atomicity.
+
+  ## Example
+      Treasury.import_historical_transactions(customer_id, "priv/repo/seeds/user_1.csv")
+  """
   def import_historical_transactions(customer_id, csv_path) do
     Repo.transaction(fn ->
       with {:ok, checking} <- Accounts.get_customer_checking_account(customer_id),
@@ -44,6 +52,11 @@ defmodule DualflowTreasury.Treasury do
     end)
   end
 
+  @doc """
+  Parses a CSV file into a list of transaction maps.
+
+  Expected CSV format: date, amount, merchant_id, description, category, is_recurring
+  """
   def parse_transaction_csv(csv_path) do
     transaction_list =
       csv_path
@@ -62,17 +75,28 @@ defmodule DualflowTreasury.Treasury do
           is_recurring: is_recurring == "true" || is_recurring == "TRUE"
         }
       end)
+
     {:ok, transaction_list}
   end
 
   # Transactions
 
+  @doc """
+  Creates a transaction record in the database.
+
+  Does NOT update account balances. Use process_transaction for full transaction processing.
+  """
   def create_transaction(attrs) do
     %Transaction{}
     |> Transaction.changeset(attrs)
     |> Repo.insert()
   end
 
+  @doc """
+  Updates a transaction's date.
+
+  Used when settling pending transfers.
+  """
   def update_transaction_date(transaction_id, new_date) do
     case Repo.get(Transaction, transaction_id) do
       nil ->
@@ -85,6 +109,12 @@ defmodule DualflowTreasury.Treasury do
     end
   end
 
+  @doc """
+  Processes a complete transaction by:
+  1. Creating the transaction record
+  2. Updating the account balance
+  3. Processing recurring bill detection if applicable
+  """
   def process_transaction(transaction_data) do
     Repo.transaction(fn ->
       with {:ok, transaction} <- create_transaction(transaction_data),
@@ -104,6 +134,7 @@ defmodule DualflowTreasury.Treasury do
     Billing.process_recurring_bill(transaction)
   end
 
+  # Gets a transaction by ID.
   defp get_transaction(transaction_id) do
     case Repo.get(Transaction, transaction_id) do
       nil -> {:error, :transaction_not_found}
@@ -111,16 +142,24 @@ defmodule DualflowTreasury.Treasury do
     end
   end
 
-  def get_all_account_transactions(account_id) do
+  @doc """
+  Gets all transactions for an account, ordered by date (newest first).
+  """
+  def get_account_transactions(account_id) do
     transactions =
       Transaction
       |> where(account_id: ^account_id)
+      |> order_by([t], desc: t.date, desc: t.id)
       |> Repo.all()
 
     {:ok, transactions}
   end
 
-  def get_account_transactions_by_date_range(account_id, start_date, end_date) do
+  @doc """
+  Gets all transactions for an account within a date range.
+  Returns a list of transactions
+  """
+  def get_account_transactions(account_id, start_date, end_date) do
     transactions =
       Transaction
       |> where(account_id: ^account_id)
@@ -130,6 +169,10 @@ defmodule DualflowTreasury.Treasury do
     {:ok, transactions}
   end
 
+  @doc """
+  Gets all transactions for an account by category.
+  Returns a list of transactions
+  """
   def get_account_transactions_by_category(account_id, category) do
     transactions =
       Transaction
@@ -142,18 +185,76 @@ defmodule DualflowTreasury.Treasury do
 
   # Transfer decisions
 
+  @doc """
+  Creates a transfer decision record in the database.
+  """
   def create_transfer_decision(attrs) do
     %TransferDecision{}
     |> TransferDecision.changeset(attrs)
     |> Repo.insert()
   end
 
+  # Gets a transfer decision by decision ID.
+  defp get_transfer_decision(decision_id) do
+    case Repo.get(TransferDecision, decision_id) do
+      nil -> {:error, :decision_not_found}
+      decision -> {:ok, decision}
+    end
+  end
+
+  @doc """
+  Gets all transfer decision for a customer, ordered by date (newest first).
+  """
+  def get_customer_transfer_decisions(customer_id) do
+    with {:ok, accounts} <- Accounts.get_customer_accounts(customer_id) do
+      account_ids = [accounts.investment.id, accounts.checking.id]
+
+      decisions =
+        TransferDecision
+        |> where([d], d.from_account_id in ^account_ids or d.to_account_id in ^account_ids)
+        |> order_by([d], desc: d.date, desc: d.id)
+        |> Repo.all()
+
+      {:ok, decisions}
+    end
+  end
+
+  @doc """
+  Gets transfer decisions within a date range for a customer.
+  """
+  def get_customer_transfer_decisions(customer_id, start_date, end_date) do
+    with {:ok, accounts} <- Accounts.get_customer_accounts(customer_id) do
+      account_ids = [accounts.investment.id, accounts.checking.id]
+
+      decisions =
+        TransferDecision
+        |> where([d], d.from_account_id in ^account_ids or d.to_account_id in ^account_ids)
+        |> where([d], d.date >= ^start_date and d.date <= ^end_date)
+        |> Repo.all()
+
+      {:ok, decisions}
+    end
+  end
+
+  @doc """
+  Makes the daily transfer decision for a customer.
+
+  Called at 7pm to analyze tomorrow's cash requirements.
+  Returns a decision map with transfer details or :no_transfer_needed.
+
+  ## Decision Logic
+  - Compares current checking balance vs tomorrow's needs
+  - Tomorrow's needs = predicted bills + target balance
+  - If checking > needs: transfer excess to investment
+  - If checking < needs: transfer shortfall from investment
+  """
   def make_daily_transfer_decision(customer_id, date) do
     with {:ok, investment} <- Accounts.get_customer_investment_account(customer_id),
          {:ok, checking} <- Accounts.get_customer_checking_account(customer_id),
          {:ok, balance} <- Accounts.get_account_balance(checking.id),
          {:ok, target_balance} <- Customers.get_customer_target_balance(customer_id),
-         {:ok, predicted_bills} <- Billing.calculate_bills(checking.id, Date.add(date, 1)) do
+         {:ok, predicted_bills} <-
+           Billing.calculate_total_bill_amount(checking.id, Date.add(date, 1)) do
       needed_tomorrow = Decimal.add(target_balance, predicted_bills)
 
       cond do
@@ -191,6 +292,17 @@ defmodule DualflowTreasury.Treasury do
     end
   end
 
+  # Transfer initiation & settlement
+
+  @doc """
+  Initiates a transfer between accounts.
+
+  Phase 1 of two-phase transfer settlement:
+  1. Debits source account immediately
+  2. Creates source transaction with date
+  3. Creates destination transaction with date = nil (pending)
+  4. Records transfer decision
+  """
   def initiate_transfer(
         date,
         amount,
@@ -240,6 +352,15 @@ defmodule DualflowTreasury.Treasury do
     end)
   end
 
+  @doc """
+  Settles a pending transfer.
+
+  Phase 2 of two-phase transfer settlement:
+  1. Credits destination account
+  2. Updates destination transaction date from nil to actual settlement date
+
+  Called by scheduled jobs based on transfer direction.
+  """
   def settle_pending_transfer(to_account_id, date, amount, dest_transaction_id) do
     Repo.transaction(fn ->
       with {:ok, _to_account} <- Accounts.adjust_account_balance(to_account_id, amount),
