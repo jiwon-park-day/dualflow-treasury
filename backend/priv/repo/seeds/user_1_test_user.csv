@@ -1,0 +1,85 @@
+date,amount,merchant_id,description,category,is_recurring
+2025-06-01,-12500.00,DOWNTOWN_OFFICE_RENT,Office Rent - Downtown Plaza,rent,TRUE
+2025-06-01,-2100.00,AWS_CLOUD_SERVICES,Amazon Web Services Cloud Infrastructure,software_license,TRUE
+2025-06-01,-800.00,OFFICE_CLEANING_SVC,Professional Office Cleaning Services,cleaning,TRUE
+2025-06-01,-1089.52,BUSINESS_INSURANCE_CO,General Liability & Tech E&O Insurance,insurance,TRUE
+2025-06-01,-14147.33,PAYROLL_PROCESSING_A,Bi-Weekly Payroll Processing,payroll,TRUE
+2025-06-03,-6442.14,GOOGLE_ADS_6,Google Ads Marketing Campaign,marketing,FALSE
+2025-06-05,-450.00,SECURITY_SYSTEMS_INC,Building Security Services,security,TRUE
+2025-06-05,-1790.87,CONSTELLATION_ENERGY,Commercial Electricity Service,utilities,TRUE
+2025-06-06,-6919.88,STAPLES_BUSINESS_6,Office Supplies & Equipment,office_supplies,FALSE
+2025-06-07,168842.77,TECHCORP_CLIENT_6,Technology Consulting Services - TechCorp,client_payment,FALSE
+2025-06-09,-5648.58,DELL_TECHNOLOGIES_6,Computer Equipment Purchase,equipment,FALSE
+2025-06-10,-680.00,VERIZON_BUSINESS,Business Phone & Internet Package,internet,TRUE
+2025-06-10,-323.35,CITY_WATER_DEPT,Water & Sewer Services,utilities,TRUE
+2025-06-10,-360000.00,CHASE_BUSINESS_CC,Chase Business Credit Card Payment,credit_card_payment,FALSE
+2025-06-12,-8154.45,AMEX_TRAVEL_6,Business Travel Expenses,travel,FALSE
+2025-06-12,159458.80,RETAILCO_CONTRACT_6,Software Development Contract - RetailCo,contract_payment,FALSE
+2025-06-15,-4200.00,BUSINESS_LOAN_PAYMENT,Business Equipment Loan Payment,loan_payment,TRUE
+2025-06-15,-1200.00,SALESFORCE_LICENSE,Salesforce CRM Enterprise License,software_license,TRUE
+2025-06-15,-19139.04,PAYROLL_PROCESSING_B,Bi-Weekly Payroll Processing,payroll,TRUE
+2025-06-15,-7681.05,LEGAL_COUNSEL_6,Legal Services & Consultation,legal_fees,FALSE
+2025-06-17,144902.55,STARTUP_INVOICE_6,Monthly SaaS Services - StartupABC,invoice_payment,FALSE
+2025-06-18,-8577.40,MCKINSEY_CONSULTING_6,Business Strategy Consulting,consulting,FALSE
+2025-06-20,-950.00,MICROSOFT_OFFICE365,Microsoft Office 365 Business Premium,software_license,TRUE
+2025-06-20,-207.79,ZOOM_BUSINESS_PRO,Zoom Business Pro Video Conferencing,software_license,TRUE
+2025-06-21,-8886.72,FACILITIES_MAINTENANCE_6,Equipment Maintenance & Repairs,maintenance,FALSE
+2025-06-22,106795.88,ENTERPRISE_CLIENT_6,Enterprise Solutions Implementation,client_payment,FALSE
+2025-06-24,-7689.78,LINKEDIN_LEARNING_6,Employee Training & Development,training,FALSE
+2025-06-25,-422.10,SLACK_BUSINESS_PLUS,Slack Business+ Team Communication,software_license,TRUE
+2025-07-01,-12500.00,DOWNTOWN_OFFICE_RENT,Office Rent - Downtown Plaza,rent,TRUE
+2025-07-01,-2100.00,AWS_CLOUD_SERVICES,Amazon Web Services Cloud Infrastructure,software_license,TRUE
+2025-07-01,-800.00,OFFICE_CLEANING_SVC,Professional Office Cleaning Services,cleaning,TRUE
+2025-07-01,-1082.00,BUSINESS_INSURANCE_CO,General Liability & Tech E&O Insurance,insurance,TRUE
+2025-07-01,-20414.29,PAYROLL_PROCESSING_A,Bi-Weekly Payroll Processing,payroll,TRUE
+2025-07-03,-9983.07,GOOGLE_ADS_7,Google Ads Marketing Campaign,marketing,FALSE
+2025-07-05,-450.00,SECURITY_SYSTEMS_INC,Building Security Services,security,TRUE
+2025-07-05,-1830.07,CONSTELLATION_ENERGY,Commercial Electricity Service,utilities,TRUE
+2025-07-06,-8676.46,STAPLES_BUSINESS_7,Office Supplies & Equipment,office_supplies,FALSE
+2025-07-07,147737.92,TECHCORP_CLIENT_7,Technology Consulting Services - TechCorp,client_payment,FALSE
+2025-07-09,-8313.36,DELL_TECHNOLOGIES_7,Computer Equipment Purchase,equipment,FALSE
+2025-07-10,-680.00,VERIZON_BUSINESS,Business Phone & Internet Package,internet,TRUE
+2025-07-10,-311.60,CITY_WATER_DEPT,Water & Sewer Services,utilities,TRUE
+2025-07-10,-390000.00,CHASE_BUSINESS_CC,Chase Business Credit Card Payment,credit_card_payment,FALSE
+2025-07-12,-10425.65,AMEX_TRAVEL_7,Business Travel Expenses,travel,FALSE
+2025-07-12,149742.77,RETAILCO_CONTRACT_7,Software Development Contract - RetailCo,contract_payment,FALSE
+2025-07-15,-4200.00,BUSINESS_LOAN_PAYMENT,Business Equipment Loan Payment,loan_payment,TRUE
+2025-07-15,-1200.00,SALESFORCE_LICENSE,Salesforce CRM Enterprise License,software_license,TRUE
+2025-07-15,-17775.43,PAYROLL_PROCESSING_B,Bi-Weekly Payroll Processing,payroll,TRUE
+2025-07-15,-7681.05,LEGAL_COUNSEL_7,Legal Services & Consultation,legal_fees,FALSE
+2025-07-17,165886.71,STARTUP_INVOICE_7,Monthly SaaS Services - StartupABC,invoice_payment,FALSE
+2025-07-18,-10042.52,MCKINSEY_CONSULTING_7,Business Strategy Consulting,consulting,FALSE
+2025-07-20,-950.00,MICROSOFT_OFFICE365,Microsoft Office 365 Business Premium,software_license,TRUE
+2025-07-20,-257.87,ZOOM_BUSINESS_PRO,Zoom Business Pro Video Conferencing,software_license,TRUE
+2025-07-21,-8660.24,FACILITIES_MAINTENANCE_7,Equipment Maintenance & Repairs,maintenance,FALSE
+2025-07-22,156632.60,ENTERPRISE_CLIENT_7,Enterprise Solutions Implementation,client_payment,FALSE
+2025-07-24,-724.42,LINKEDIN_LEARNING_7,Employee Training & Development,training,FALSE
+2025-07-25,-448.74,SLACK_BUSINESS_PLUS,Slack Business+ Team Communication,software_license,TRUE
+2025-08-01,-12500.00,DOWNTOWN_OFFICE_RENT,Office Rent - Downtown Plaza,rent,TRUE
+2025-08-01,-2100.00,AWS_CLOUD_SERVICES,Amazon Web Services Cloud Infrastructure,software_license,TRUE
+2025-08-01,-800.00,OFFICE_CLEANING_SVC,Professional Office Cleaning Services,cleaning,TRUE
+2025-08-01,-1221.19,BUSINESS_INSURANCE_CO,General Liability & Tech E&O Insurance,insurance,TRUE
+2025-08-01,-19820.38,PAYROLL_PROCESSING_A,Bi-Weekly Payroll Processing,payroll,TRUE
+2025-08-03,-5604.47,GOOGLE_ADS_8,Google Ads Marketing Campaign,marketing,FALSE
+2025-08-05,-450.00,SECURITY_SYSTEMS_INC,Building Security Services,security,TRUE
+2025-08-05,-1557.12,CONSTELLATION_ENERGY,Commercial Electricity Service,utilities,TRUE
+2025-08-06,-8936.80,STAPLES_BUSINESS_8,Office Supplies & Equipment,office_supplies,FALSE
+2025-08-07,157729.60,TECHCORP_CLIENT_8,Technology Consulting Services - TechCorp,client_payment,FALSE
+2025-08-09,-7564.83,DELL_TECHNOLOGIES_8,Computer Equipment Purchase,equipment,FALSE
+2025-08-10,-680.00,VERIZON_BUSINESS,Business Phone & Internet Package,internet,TRUE
+2025-08-10,-305.62,CITY_WATER_DEPT,Water & Sewer Services,utilities,TRUE
+2025-08-10,-382500.00,CHASE_BUSINESS_CC,Chase Business Credit Card Payment,credit_card_payment,FALSE
+2025-08-12,-10289.77,AMEX_TRAVEL_8,Business Travel Expenses,travel,FALSE
+2025-08-12,170512.42,RETAILCO_CONTRACT_8,Software Development Contract - RetailCo,contract_payment,FALSE
+2025-08-15,-4200.00,BUSINESS_LOAN_PAYMENT,Business Equipment Loan Payment,loan_payment,TRUE
+2025-08-15,-1200.00,SALESFORCE_LICENSE,Salesforce CRM Enterprise License,software_license,TRUE
+2025-08-15,-17267.84,PAYROLL_PROCESSING_B,Bi-Weekly Payroll Processing,payroll,TRUE
+2025-08-15,-6140.14,LEGAL_COUNSEL_8,Legal Services & Consultation,legal_fees,FALSE
+2025-08-17,120114.44,STARTUP_INVOICE_8,Monthly SaaS Services - StartupABC,invoice_payment,FALSE
+2025-08-18,-9110.15,MCKINSEY_CONSULTING_8,Business Strategy Consulting,consulting,FALSE
+2025-08-20,-950.00,MICROSOFT_OFFICE365,Microsoft Office 365 Business Premium,software_license,TRUE
+2025-08-20,-233.62,ZOOM_BUSINESS_PRO,Zoom Business Pro Video Conferencing,software_license,TRUE
+2025-08-21,-10188.46,FACILITIES_MAINTENANCE_8,Equipment Maintenance & Repairs,maintenance,FALSE
+2025-08-22,151643.54,ENTERPRISE_CLIENT_8,Enterprise Solutions Implementation,client_payment,FALSE
+2025-08-24,-5915.38,LINKEDIN_LEARNING_8,Employee Training & Development,training,FALSE
+2025-08-25,-464.23,SLACK_BUSINESS_PLUS,Slack Business+ Team Communication,software_license,TRUE
