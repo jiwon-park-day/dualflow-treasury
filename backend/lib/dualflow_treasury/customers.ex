@@ -11,20 +11,31 @@ defmodule DualflowTreasury.Customers do
   alias DualflowTreasury.Repo
   alias DualflowTreasury.Customers.{Customer, CustomerSettings}
 
+
   # Customer authentication
 
   @doc """
-  Creates a new customer with hashed password.
+  Creates a new customer with hashed password and default settings.
+
+  The password is automatically hashed before storage.
   """
-  def create_customer(attrs \\ %{}) do
+  def create_customer(attrs) do
     password = attrs[:password] || attrs["password"]
 
-    attrs
-    |> Map.delete(:password)
-    |> Map.delete("password")
-    |> Map.put(:password_hash, hash_password(password))
-    |> then(&Customer.changeset(%Customer{}, &1))
-    |> Repo.insert()
+    customer_attrs =
+      attrs
+      |> Map.delete(:password)
+      |> Map.delete("password")
+      |> Map.put(:password_hash, hash_password(password))
+
+    Repo.transaction(fn ->
+      with {:ok, customer} <- Customer.changeset(%Customer{}, customer_attrs) |> Repo.insert(),
+           {:ok, _settings} <- create_customer_settings(customer.id) do
+        customer
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
 
   @doc """
@@ -67,7 +78,50 @@ defmodule DualflowTreasury.Customers do
     end
   end
 
+
+  # Password helpers
+
+  # Hashes a password using Bcrypt.
+  defp hash_password(nil), do: nil
+  defp hash_password(password), do: Bcrypt.hash_pwd_salt(password)
+
+  # Verifies a password against a hash.
+  defp verify_password(password, hash), do: Bcrypt.verify_pass(password, hash)
+
+
   # Customer Settings
+
+  # Creates customer settings with default values.
+  defp create_customer_settings(customer_id) do
+    %CustomerSettings{}
+    |> CustomerSettings.changeset(%{customer_id: customer_id})
+    |> Repo.insert()
+  end
+
+  # Updates customer settings' attributes.
+  defp update_customer_settings(customer_id, attrs) do
+    with {:ok, settings} <- get_customer_settings(customer_id) do
+      settings
+      |> CustomerSettings.changeset(attrs)
+      |> Repo.update()
+      end
+  end
+
+  @doc """
+  Updates a customer's target balance.
+  """
+  def update_customer_target_balance(customer_id, new_target_balance) do
+    update_customer_settings(customer_id, %{target_balance: new_target_balance})
+  end
+
+  @doc """
+  Toggles the auto-transfer feature for a customer.
+  """
+  def toggle_customer_auto_transfer(customer_id) do
+    with {:ok, settings} <- get_customer_settings(customer_id) do
+      update_customer_settings(customer_id, %{auto_transfer_enabled: !settings.auto_transfer_enabled})
+    end
+  end
 
   @doc """
   Gets customer settings by customer ID.
@@ -76,31 +130,6 @@ defmodule DualflowTreasury.Customers do
     case Repo.get_by(CustomerSettings, customer_id: customer_id) do
       nil -> {:error, :settings_not_found}
       settings -> {:ok, settings}
-    end
-  end
-
-  @doc """
-  Creates customer settings with default values.
-  """
-  def create_customer_settings(customer_id, attrs \\ %{}) do
-    %CustomerSettings{}
-    |> CustomerSettings.changeset(Map.put(attrs, :customer_id, customer_id))
-    |> Repo.insert()
-  end
-
-  @doc """
-  Updates customer settings.
-  Creates settings with default values if they don't exist.
-  """
-  def update_customer_settings(customer_id, attrs) do
-    case get_customer_settings(customer_id) do
-      {:ok, settings} ->
-        settings
-        |> CustomerSettings.changeset(attrs)
-        |> Repo.update()
-
-      {:error, :settings_not_found} ->
-        create_customer_settings(customer_id, attrs)
     end
   end
 
@@ -114,30 +143,4 @@ defmodule DualflowTreasury.Customers do
       {:error, :settings_not_found} -> {:ok, Decimal.new("0.00")}
     end
   end
-
-  @doc """
-  Toggles the auto-transfer feature for a customer.
-  Treats missing settings as having auto-transfer enabled (default true).
-  """
-  def toggle_customer_auto_transfer(customer_id) do
-    case get_customer_settings(customer_id) do
-      {:ok, settings} ->
-        update_customer_settings(customer_id, %{
-          auto_transfer_enabled: !settings.auto_transfer_enabled
-        })
-
-      {:error, :settings_not_found} ->
-        # Settings don't exist, default is TRUE, toggling means disable
-        create_customer_settings(customer_id, %{auto_transfer_enabled: false})
-    end
-  end
-
-  # Password helpers
-
-  # Hashes a password using Bcrypt.
-  defp hash_password(nil), do: nil
-  defp hash_password(password), do: Bcrypt.hash_pwd_salt(password)
-
-  # Verifies a password against a hash.
-  defp verify_password(password, hash), do: Bcrypt.verify_pass(password, hash)
 end

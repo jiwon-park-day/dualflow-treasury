@@ -17,6 +17,7 @@ defmodule DualflowTreasury.Treasury do
   alias DualflowTreasury.Treasury.{Transaction, TransferDecision}
   alias NimbleCSV.RFC4180, as: CSV
 
+
   # Data import & parse
 
   @doc """
@@ -79,25 +80,20 @@ defmodule DualflowTreasury.Treasury do
     {:ok, transaction_list}
   end
 
+
   # Transactions
 
-  @doc """
-  Creates a transaction record in the database.
-
-  Does NOT update account balances. Use process_transaction for full transaction processing.
-  """
-  def create_transaction(attrs) do
+  # Creates a transaction record in the database.
+  # Does NOT update account balances. Use process_transaction for full transaction processing.
+  defp create_transaction(attrs) do
     %Transaction{}
     |> Transaction.changeset(attrs)
     |> Repo.insert()
   end
 
-  @doc """
-  Updates a transaction's date.
-
-  Used when settling pending transfers.
-  """
-  def update_transaction_date(transaction_id, new_date) do
+  # Updates a transaction's date.
+  # Used when settling pending transfers.
+  defp update_transaction_date(transaction_id, new_date) do
     case Repo.get(Transaction, transaction_id) do
       nil ->
         {:error, :transaction_not_found}
@@ -183,12 +179,11 @@ defmodule DualflowTreasury.Treasury do
     {:ok, transactions}
   end
 
+
   # Transfer decisions
 
-  @doc """
-  Creates a transfer decision record in the database.
-  """
-  def create_transfer_decision(attrs) do
+  # Creates a transfer decision record in the database.
+  defp create_transfer_decision(attrs) do
     %TransferDecision{}
     |> TransferDecision.changeset(attrs)
     |> Repo.insert()
@@ -291,6 +286,7 @@ defmodule DualflowTreasury.Treasury do
       end
     end
   end
+
 
   # Transfer initiation & settlement
 

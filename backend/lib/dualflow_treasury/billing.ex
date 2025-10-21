@@ -16,6 +16,7 @@ defmodule DualflowTreasury.Billing do
 
   @buffer_percentage Decimal.new("0.10")
 
+
   # Recurring bill processing
 
   @doc """
@@ -35,6 +36,7 @@ defmodule DualflowTreasury.Billing do
              transaction.merchant_id,
              transaction.date.day
            ) do
+
         # Existing bill
         {:ok, bill} ->
           with {:ok, bill} <- maybe_activate_bill(bill),
@@ -70,6 +72,7 @@ defmodule DualflowTreasury.Billing do
     end)
   end
 
+
   # Recurring bills
 
   # Creates a recurring bill record in the database.
@@ -89,7 +92,6 @@ defmodule DualflowTreasury.Billing do
       monthly_due_day: transaction.date.day,
       is_active: true
     }
-
     create_recurring_bill(attrs)
   end
 
@@ -148,7 +150,6 @@ defmodule DualflowTreasury.Billing do
       RecurringBill
       |> where(account_id: ^account_id)
       |> Repo.all()
-
     {:ok, bills}
   end
 
@@ -163,7 +164,6 @@ defmodule DualflowTreasury.Billing do
       |> where(account_id: ^account_id)
       |> where(monthly_due_day: ^due_day)
       |> Repo.all()
-
     {:ok, bills}
   end
 
@@ -177,7 +177,6 @@ defmodule DualflowTreasury.Billing do
       RecurringBill
       |> where(account_id: ^account_id, is_active: true)
       |> Repo.all()
-
     {:ok, bills}
   end
 
@@ -193,7 +192,6 @@ defmodule DualflowTreasury.Billing do
       |> where(monthly_due_day: ^due_day)
       |> where(is_active: true)
       |> Repo.all()
-
     {:ok, bills}
   end
 
@@ -213,6 +211,7 @@ defmodule DualflowTreasury.Billing do
       bill -> {:ok, bill}
     end
   end
+
 
   # Bill history
 
@@ -235,9 +234,9 @@ defmodule DualflowTreasury.Billing do
       RecurringBillHistory
       |> where(bill_id: ^bill_id)
       |> Repo.all()
-
     {:ok, history}
   end
+
 
   # Bill prediction
 
@@ -252,7 +251,6 @@ defmodule DualflowTreasury.Billing do
 
     else
       sorted_history = Enum.sort_by(history, & &1.inserted_at, :desc)
-
       case sorted_history do
         [latest | rest] when length(rest) >= 1 ->
           [second | older] = rest
@@ -271,7 +269,6 @@ defmodule DualflowTreasury.Billing do
                 |> Enum.map(& &1.actual_amount)
                 |> Enum.reduce(&Decimal.add/2)
                 |> Decimal.div(length(older))
-
               Decimal.mult(older_avg, Decimal.new("0.2"))
             else
               Decimal.new("0.00")
@@ -282,7 +279,6 @@ defmodule DualflowTreasury.Billing do
           # Add recent under-prediction errors
           recent_error_adjustment = calculate_recent_error_adjustment(sorted_history)
           prediction = Decimal.add(base_prediction, recent_error_adjustment)
-
           {:ok, prediction}
       end
     end
@@ -312,6 +308,7 @@ defmodule DualflowTreasury.Billing do
     end
   end
 
+
   # Daily bill amount
 
   @doc """
@@ -338,6 +335,7 @@ defmodule DualflowTreasury.Billing do
     end
   end
 
+
   # Credit card bill
 
   @doc """
@@ -355,7 +353,6 @@ defmodule DualflowTreasury.Billing do
       monthly_due_day: payment_due_day,
       is_active: true
     }
-
     create_recurring_bill(attrs)
   end
 

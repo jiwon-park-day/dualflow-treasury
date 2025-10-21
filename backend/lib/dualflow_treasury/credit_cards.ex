@@ -22,6 +22,7 @@ defmodule DualflowTreasury.CreditCards do
   @default_payment_due_day 10
   @default_merchant_id "DUALFLOW_BUSINESS_CC"
 
+
   # Credit card operations
 
   # Creates a credit card record in the database.
@@ -114,6 +115,7 @@ defmodule DualflowTreasury.CreditCards do
     end
   end
 
+
   # Credit card transactions
 
   # Creates a credit card transaction record in the database.
@@ -197,6 +199,7 @@ defmodule DualflowTreasury.CreditCards do
       end
     end)
   end
+
 
   # Statement closing & payment
 

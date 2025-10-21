@@ -16,16 +16,6 @@ defmodule DualflowTreasury.Accounts do
 
   # Account CRUD
 
-  @doc """
-  Gets an account by ID.
-  """
-  def get_account(account_id) do
-    case Repo.get(Account, account_id) do
-      nil -> {:error, :account_not_found}
-      account -> {:ok, account}
-    end
-  end
-
   # Creates a new account with the given attributes.
   defp create_account(attrs) do
     %Account{}
@@ -52,7 +42,6 @@ defmodule DualflowTreasury.Accounts do
       account_type: :investment,
       interest_rate: Decimal.new("0.05")
     }
-
     create_account(investment_attrs)
   end
 
@@ -65,17 +54,54 @@ defmodule DualflowTreasury.Accounts do
       account_type: :checking,
       interest_rate: Decimal.new("0.025")
     }
-
     create_account(checking_attrs)
   end
 
+  # Updates an account's attributes.
+  defp update_account(account_id, attrs) do
+    with {:ok, account} <- get_account(account_id) do
+      account
+      |> Account.changeset(attrs)
+      |> Repo.update()
+    end
+  end
+
   @doc """
-  Gets all accounts for a customer.
-  Returns a list of accounts.
+  Updates an account's balance to a new value.
+  """
+  def update_account_balance(account_id, new_balance) do
+    update_account(account_id, %{current_balance: new_balance})
+  end
+
+  @doc """
+  Adjusts an account's balance by the given amount.
+  Amount can be positive (credit) or negative (debit).
+  """
+  def adjust_account_balance(account_id, adjustment_amount) do
+    with {:ok, account} <- get_account(account_id) do
+      new_balance = Decimal.add(account.current_balance, adjustment_amount)
+      update_account(account_id, %{current_balance: new_balance})
+    end
+  end
+
+  @doc """
+  Gets an account by ID.
+  """
+  def get_account(account_id) do
+    case Repo.get(Account, account_id) do
+      nil -> {:error, :account_not_found}
+      account -> {:ok, account}
+    end
+  end
+
+  @doc """
+  Gets both accounts for a customer.
+
+  Each customer has exactly one of each account type.
   """
   def get_customer_accounts(customer_id) do
     with {:ok, investment} <- get_customer_investment_account(customer_id),
-         {:ok, checking} <- get_customer_checking_account (customer_id) do
+         {:ok, checking} <- get_customer_checking_account(customer_id) do
       {:ok, %{investment: investment, checking: checking}}
     end
   end
@@ -119,46 +145,10 @@ defmodule DualflowTreasury.Accounts do
   Gets the current balance for an account.
   """
   def get_account_balance(account_id) do
-    case Repo.get(Account, account_id) do
-      nil -> {:error, :account_not_found}
-      account -> {:ok, account.current_balance}
+    with {:ok, account} <- get_account(account_id) do
+      {:ok, account.current_balance}
     end
   end
-
-  @doc """
-  Updates an account's balance to a new value.
-  """
-  def update_account_balance(account_id, new_balance) do
-    case Repo.get(Account, account_id) do
-      nil ->
-        {:error, :account_not_found}
-
-      account ->
-        account
-        |> Account.changeset(%{current_balance: new_balance})
-        |> Repo.update()
-    end
-  end
-
-  @doc """
-  Adjusts an account's balance by the given amount.
-  Amount can be positive (deposit) or negative (withdrawal).
-  """
-  def adjust_account_balance(account_id, adjustment_amount) do
-    case Repo.get(Account, account_id) do
-      nil ->
-        {:error, :account_not_found}
-
-      account ->
-        new_balance = Decimal.add(account.current_balance, adjustment_amount)
-
-        account
-        |> Account.changeset(%{current_balance: new_balance})
-        |> Repo.update()
-    end
-  end
-
-  # Interest calculations
 
   @doc """
   Gets the interest rate for an account.
@@ -169,15 +159,15 @@ defmodule DualflowTreasury.Accounts do
     end
   end
 
-  @doc """
-  Calculates daily compound interest for a specific date.
 
-  Interest is compounded daily based on:
-  - Current ending balance
-  - Cumulative interest from previous day
-  - Annual interest rate divided by 365
-  """
-  def calculate_account_daily_interest(account_id, date) do
+  # Interest calculations
+
+  # Calculates daily compound interest for a specific date.
+  # Interest is compounded daily based on:
+  # - Current ending balance
+  # - Cumulative interest from previous day
+  # - Annual interest rate divided by 365
+  defp calculate_account_daily_interest(account_id, date) do
     with {:ok, ending_balance} <- get_account_balance(account_id),
          # Cumulative interest until date - 1
          {:ok, cumulative_interest} <-
@@ -215,7 +205,15 @@ defmodule DualflowTreasury.Accounts do
     end
   end
 
+
   # Daily snapshots
+
+  # Creates a snapshot record in the database.
+  defp create_snapshot(attrs) do
+    %AccountDailySnapshot{}
+    |> AccountDailySnapshot.changeset(attrs)
+    |> Repo.insert()
+  end
 
   # Gets a daily snapshot by snapshot ID.
   defp get_daily_snapshot(snapshot_id) do
@@ -239,17 +237,16 @@ defmodule DualflowTreasury.Accounts do
   Creates a daily account snapshot for a specific date.
 
   Called at midnight (date + 1) when the ending balance is finalized.
-  Cumulative interest resets to 0 on the 1st of each month after payment processing.
+  Cumulative interest resets to 0 on the 1st of each month after payment processing
   """
   def create_account_daily_snapshot(account_id, date) do
     with {:ok, balance} <- get_account_balance(account_id),
          {:ok, daily_interest} <- calculate_account_daily_interest(account_id, date) do
-
       prev_cumulative =
         if date.day == 1 do
           period_end_date = Date.add(date, -1)
 
-          case get_interest_payment(account_id, period_end_date) do
+          case get_account_interest_payment(account_id, period_end_date) do
             # Payment processed - reset monthly cumulative
             {:ok, _payment} ->
               Decimal.new("0.00")
@@ -285,14 +282,37 @@ defmodule DualflowTreasury.Accounts do
     end
   end
 
-  # Creates a snapshot record in the database.
-  defp create_snapshot(attrs) do
-    %AccountDailySnapshot{}
-    |> AccountDailySnapshot.changeset(attrs)
+
+  # Monthly interest payments
+
+  # Creates an interest payment record in the database.
+  defp create_interest_payment(attrs) do
+    %InterestPayment{}
+    |> InterestPayment.changeset(attrs)
     |> Repo.insert()
   end
 
-  # Monthly interest payments
+  # Gets an interest payment record for a specific period.
+  # Used to verify payment was processed before resetting cumulative interest.
+  defp get_account_interest_payment(account_id, period_end_date) do
+    case Repo.get_by(InterestPayment, %{account_id: account_id, period_end_date: period_end_date}) do
+      nil -> {:error, :payment_not_found}
+      payment -> {:ok, payment}
+    end
+  end
+
+  @doc """
+  Gets all interest payments for an account within a date range.
+  Returns a list of interest payment records.
+  """
+  def get_account_interest_payments(account_id, start_date, end_date) do
+    payments =
+      InterestPayment
+      |> where(account_id: ^account_id)
+      |> where([p], p.period_end_date >= ^start_date and p.period_end_date <= ^end_date)
+      |> Repo.all()
+    {:ok, payments}
+  end
 
   @doc """
   Processes monthly interest payment for an account.
@@ -324,35 +344,5 @@ defmodule DualflowTreasury.Accounts do
         end
       end)
     end
-  end
-
-  # Creates an interest payment record in the database.
-  defp create_interest_payment(attrs) do
-    %InterestPayment{}
-    |> InterestPayment.changeset(attrs)
-    |> Repo.insert()
-  end
-
-  # Gets an interest payment record for a specific period.
-  # Used to verify payment was processed before resetting cumulative interest.
-  defp get_interest_payment(account_id, period_end_date) do
-    case Repo.get_by(InterestPayment, %{account_id: account_id, period_end_date: period_end_date}) do
-      nil -> {:error, :payment_not_found}
-      payment -> {:ok, payment}
-    end
-  end
-
-  @doc """
-  Gets all interest payments for an account within a date range.
-  Returns a list of interest payment records.
-  """
-  def get_account_interest_payments(account_id, start_date, end_date) do
-    payments =
-      InterestPayment
-      |> where(account_id: ^account_id)
-      |> where([p], p.payment_date >= ^start_date and p.payment_date <= ^end_date)
-      |> Repo.all()
-
-    {:ok, payments}
   end
 end
