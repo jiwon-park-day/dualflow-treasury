@@ -360,6 +360,7 @@ defmodule DualflowTreasury.CreditCards do
       # Payment covers entire statement balance with remainder
       Decimal.compare(payment_amount, statement_balance) == :gt ->
         remainder = Decimal.sub(payment_amount, statement_balance)
+
         {:ok,
          %{
            statement_balance: Decimal.new("0.00"),
