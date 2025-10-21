@@ -16,63 +16,6 @@ defmodule DualflowTreasury.Billing do
 
   @buffer_percentage Decimal.new("0.10")
 
-
-  # Recurring bill processing
-
-  @doc """
-  Processes a recurring transaction by:
-  1. Finding or creating a recurring bill record
-  2. Activating the bill if inactive
-  3. Creating bill history entry
-  4. Updating bill predictions based on history
-
-  Called by Treasury.process_transaction when is_recurring = true.
-  All operations are wrapped in a database transaction for atomicity.
-  """
-  def process_recurring_bill(transaction) do
-    Repo.transaction(fn ->
-      case get_account_recurring_bill(
-             transaction.account_id,
-             transaction.merchant_id,
-             transaction.date.day
-           ) do
-
-        # Existing bill
-        {:ok, bill} ->
-          with {:ok, bill} <- maybe_activate_bill(bill),
-               {:ok, _history} <-
-                 create_recurring_bill_history(%{
-                   bill_id: bill.id,
-                   actual_amount: Decimal.abs(transaction.amount),
-                   predicted_amount: bill.predicted_amount,
-                   transaction_id: transaction.id
-                 }),
-               {:ok, new_pred} <- predict_bill_amount(bill.id),
-               {:ok, updated_bill} <-
-                 update_recurring_bill(bill.id, %{predicted_amount: new_pred}) do
-            updated_bill
-          else
-            {:error, reason} -> Repo.rollback(reason)
-          end
-
-        # New bill
-        {:error, :bill_not_found} ->
-          with {:ok, new_bill} <- create_recurring_bill_from_transaction(transaction),
-               {:ok, _history} <-
-                 create_recurring_bill_history(%{
-                   bill_id: new_bill.id,
-                   actual_amount: Decimal.abs(transaction.amount),
-                   transaction_id: transaction.id
-                 }) do
-            new_bill
-          else
-            {:error, reason} -> Repo.rollback(reason)
-          end
-      end
-    end)
-  end
-
-
   # Recurring bills
 
   # Creates a recurring bill record in the database.
@@ -92,6 +35,7 @@ defmodule DualflowTreasury.Billing do
       monthly_due_day: transaction.date.day,
       is_active: true
     }
+
     create_recurring_bill(attrs)
   end
 
@@ -150,6 +94,7 @@ defmodule DualflowTreasury.Billing do
       RecurringBill
       |> where(account_id: ^account_id)
       |> Repo.all()
+
     {:ok, bills}
   end
 
@@ -164,6 +109,7 @@ defmodule DualflowTreasury.Billing do
       |> where(account_id: ^account_id)
       |> where(monthly_due_day: ^due_day)
       |> Repo.all()
+
     {:ok, bills}
   end
 
@@ -177,6 +123,7 @@ defmodule DualflowTreasury.Billing do
       RecurringBill
       |> where(account_id: ^account_id, is_active: true)
       |> Repo.all()
+
     {:ok, bills}
   end
 
@@ -192,6 +139,7 @@ defmodule DualflowTreasury.Billing do
       |> where(monthly_due_day: ^due_day)
       |> where(is_active: true)
       |> Repo.all()
+
     {:ok, bills}
   end
 
@@ -212,6 +160,59 @@ defmodule DualflowTreasury.Billing do
     end
   end
 
+  # Recurring bill processing
+
+  @doc """
+  Processes a recurring transaction by:
+  1. Finding or creating a recurring bill record
+  2. Activating the bill if inactive
+  3. Creating bill history entry
+  4. Updating bill predictions based on history
+
+  Called by Treasury.process_transaction when is_recurring = true.
+  All operations are wrapped in a database transaction for atomicity.
+  """
+  def process_recurring_bill(transaction) do
+    Repo.transaction(fn ->
+      case get_account_recurring_bill(
+             transaction.account_id,
+             transaction.merchant_id,
+             transaction.date.day
+           ) do
+        # Existing bill
+        {:ok, bill} ->
+          with {:ok, bill} <- maybe_activate_bill(bill),
+               {:ok, _history} <-
+                 create_recurring_bill_history(%{
+                   bill_id: bill.id,
+                   actual_amount: Decimal.abs(transaction.amount),
+                   predicted_amount: bill.predicted_amount,
+                   transaction_id: transaction.id
+                 }),
+               {:ok, new_pred} <- predict_bill_amount(bill.id),
+               {:ok, updated_bill} <-
+                 update_recurring_bill(bill.id, %{predicted_amount: new_pred}) do
+            updated_bill
+          else
+            {:error, reason} -> Repo.rollback(reason)
+          end
+
+        # New bill
+        {:error, :bill_not_found} ->
+          with {:ok, new_bill} <- create_recurring_bill_from_transaction(transaction),
+               {:ok, _history} <-
+                 create_recurring_bill_history(%{
+                   bill_id: new_bill.id,
+                   actual_amount: Decimal.abs(transaction.amount),
+                   transaction_id: transaction.id
+                 }) do
+            new_bill
+          else
+            {:error, reason} -> Repo.rollback(reason)
+          end
+      end
+    end)
+  end
 
   # Bill history
 
@@ -234,9 +235,9 @@ defmodule DualflowTreasury.Billing do
       RecurringBillHistory
       |> where(bill_id: ^bill_id)
       |> Repo.all()
+
     {:ok, history}
   end
-
 
   # Bill prediction
 
@@ -248,9 +249,9 @@ defmodule DualflowTreasury.Billing do
 
     if length(history) < 2 do
       {:error, :insufficient_history}
-
     else
       sorted_history = Enum.sort_by(history, & &1.inserted_at, :desc)
+
       case sorted_history do
         [latest | rest] when length(rest) >= 1 ->
           [second | older] = rest
@@ -269,6 +270,7 @@ defmodule DualflowTreasury.Billing do
                 |> Enum.map(& &1.actual_amount)
                 |> Enum.reduce(&Decimal.add/2)
                 |> Decimal.div(length(older))
+
               Decimal.mult(older_avg, Decimal.new("0.2"))
             else
               Decimal.new("0.00")
@@ -308,7 +310,6 @@ defmodule DualflowTreasury.Billing do
     end
   end
 
-
   # Daily bill amount
 
   @doc """
@@ -335,7 +336,6 @@ defmodule DualflowTreasury.Billing do
     end
   end
 
-
   # Credit card bill
 
   @doc """
@@ -353,6 +353,7 @@ defmodule DualflowTreasury.Billing do
       monthly_due_day: payment_due_day,
       is_active: true
     }
+
     create_recurring_bill(attrs)
   end
 

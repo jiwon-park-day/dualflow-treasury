@@ -11,7 +11,6 @@ defmodule DualflowTreasury.Customers do
   alias DualflowTreasury.Repo
   alias DualflowTreasury.Customers.{Customer, CustomerSettings}
 
-
   # Customer authentication
 
   @doc """
@@ -78,7 +77,6 @@ defmodule DualflowTreasury.Customers do
     end
   end
 
-
   # Password helpers
 
   # Hashes a password using Bcrypt.
@@ -87,7 +85,6 @@ defmodule DualflowTreasury.Customers do
 
   # Verifies a password against a hash.
   defp verify_password(password, hash), do: Bcrypt.verify_pass(password, hash)
-
 
   # Customer Settings
 
@@ -104,7 +101,7 @@ defmodule DualflowTreasury.Customers do
       settings
       |> CustomerSettings.changeset(attrs)
       |> Repo.update()
-      end
+    end
   end
 
   @doc """
@@ -119,7 +116,9 @@ defmodule DualflowTreasury.Customers do
   """
   def toggle_customer_auto_transfer(customer_id) do
     with {:ok, settings} <- get_customer_settings(customer_id) do
-      update_customer_settings(customer_id, %{auto_transfer_enabled: !settings.auto_transfer_enabled})
+      update_customer_settings(customer_id, %{
+        auto_transfer_enabled: !settings.auto_transfer_enabled
+      })
     end
   end
 

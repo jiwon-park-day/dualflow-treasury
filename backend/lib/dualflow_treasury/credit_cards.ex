@@ -22,7 +22,6 @@ defmodule DualflowTreasury.CreditCards do
   @default_payment_due_day 10
   @default_merchant_id "DUALFLOW_BUSINESS_CC"
 
-
   # Credit card operations
 
   # Creates a credit card record in the database.
@@ -115,7 +114,6 @@ defmodule DualflowTreasury.CreditCards do
     end
   end
 
-
   # Credit card transactions
 
   # Creates a credit card transaction record in the database.
@@ -199,7 +197,6 @@ defmodule DualflowTreasury.CreditCards do
       end
     end)
   end
-
 
   # Statement closing & payment
 
@@ -363,6 +360,7 @@ defmodule DualflowTreasury.CreditCards do
       # Payment covers entire statement balance with remainder
       Decimal.compare(payment_amount, statement_balance) == :gt ->
         remainder = Decimal.sub(payment_amount, statement_balance)
+
         {:ok,
          %{
            statement_balance: Decimal.new("0.00"),

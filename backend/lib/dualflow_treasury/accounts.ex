@@ -42,6 +42,7 @@ defmodule DualflowTreasury.Accounts do
       account_type: :investment,
       interest_rate: Decimal.new("0.05")
     }
+
     create_account(investment_attrs)
   end
 
@@ -54,6 +55,7 @@ defmodule DualflowTreasury.Accounts do
       account_type: :checking,
       interest_rate: Decimal.new("0.025")
     }
+
     create_account(checking_attrs)
   end
 
@@ -159,7 +161,6 @@ defmodule DualflowTreasury.Accounts do
     end
   end
 
-
   # Interest calculations
 
   # Calculates daily compound interest for a specific date.
@@ -205,7 +206,6 @@ defmodule DualflowTreasury.Accounts do
     end
   end
 
-
   # Daily snapshots
 
   # Creates a snapshot record in the database.
@@ -237,7 +237,7 @@ defmodule DualflowTreasury.Accounts do
   Creates a daily account snapshot for a specific date.
 
   Called at midnight (date + 1) when the ending balance is finalized.
-  Cumulative interest resets to 0 on the 1st of each month after payment processing
+  Cumulative interest resets to 0 on the 1st of each month after payment processing.
   """
   def create_account_daily_snapshot(account_id, date) do
     with {:ok, balance} <- get_account_balance(account_id),
@@ -282,7 +282,6 @@ defmodule DualflowTreasury.Accounts do
     end
   end
 
-
   # Monthly interest payments
 
   # Creates an interest payment record in the database.
@@ -311,6 +310,7 @@ defmodule DualflowTreasury.Accounts do
       |> where(account_id: ^account_id)
       |> where([p], p.period_end_date >= ^start_date and p.period_end_date <= ^end_date)
       |> Repo.all()
+
     {:ok, payments}
   end
 
