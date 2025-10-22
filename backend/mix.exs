@@ -69,7 +69,9 @@ defmodule DualflowTreasury.MixProject do
       # Additional dependencies
       {:oban, "~> 2.15"},           # Job scheduling
       {:decimal, "~> 2.0"},         # Precise decimal calculations
-      {:bcrypt_elixir, "~> 3.0"},   # Password hashing
+      # {:bcrypt_elixir, "~> 3.0"},
+      # {:argon2_elixir, "~> 4.0"},
+      {:pbkdf2_elixir, "~> 2.0"},   # Password hashing
       {:cors_plug, "~> 3.0"},        # CORS for frontend
       {:nimble_csv, "~> 1.2"}
     ]

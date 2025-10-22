@@ -35,7 +35,7 @@ defmodule DualflowTreasury.Treasury do
       with {:ok, checking} <- Accounts.get_customer_checking_account(customer_id),
            {:ok, transaction_list} <- parse_transaction_csv(csv_path) do
         transaction_list
-        |> Enum.sort_by(& &1.date)
+        |> Enum.sort(fn t1, t2 -> Date.compare(t1.date, t2.date) != :gt end)
         |> Enum.reduce_while([], fn txn_data, acc ->
           txn_data = Map.put(txn_data, :account_id, checking.id)
 
