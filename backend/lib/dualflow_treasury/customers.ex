@@ -72,19 +72,19 @@ defmodule DualflowTreasury.Customers do
 
       {:error, :customer_not_found} ->
         # Still performs hash to prevent timing attacks
-        Bcrypt.no_user_verify()
+        Pbkdf2.no_user_verify()
         {:error, :invalid_credentials}
     end
   end
 
   # Password helpers
 
-  # Hashes a password using Bcrypt.
+  # Hashes a password using Pbkdf2.
   defp hash_password(nil), do: nil
-  defp hash_password(password), do: Bcrypt.hash_pwd_salt(password)
+  defp hash_password(password), do: Pbkdf2.hash_pwd_salt(password)
 
   # Verifies a password against a hash.
-  defp verify_password(password, hash), do: Bcrypt.verify_pass(password, hash)
+  defp verify_password(password, hash), do: Pbkdf2.verify_pass(password, hash)
 
   # Customer Settings
 
