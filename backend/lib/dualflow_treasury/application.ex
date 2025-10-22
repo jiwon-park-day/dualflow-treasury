@@ -15,6 +15,7 @@ defmodule DualflowTreasury.Application do
       # Start a worker by calling: DualflowTreasury.Worker.start_link(arg)
       # {DualflowTreasury.Worker, arg},
       # Start to serve requests, typically the last entry
+      {Oban, Application.fetch_env!(:dualflow_treasury, Oban)},
       DualflowTreasuryWeb.Endpoint
     ]
 
