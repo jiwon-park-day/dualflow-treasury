@@ -103,6 +103,14 @@ defmodule DualflowTreasury.CreditCards do
   end
 
   @doc """
+  Gets all credit cards in the system.
+  """
+  def get_all_credit_cards() do
+    credit_cards = Repo.all(CreditCard)
+    {:ok, credit_cards}
+  end
+
+  @doc """
   Gets the credit card for a customer.
 
   Currently supports one card per customer.

@@ -97,6 +97,14 @@ defmodule DualflowTreasury.Accounts do
   end
 
   @doc """
+  Gets all accounts in the system.
+  """
+  def get_all_accounts() do
+    accounts = Repo.all(Account)
+    {:ok, accounts}
+  end
+
+  @doc """
   Gets both accounts for a customer.
 
   Each customer has exactly one of each account type.

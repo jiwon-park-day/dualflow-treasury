@@ -48,6 +48,14 @@ defmodule DualflowTreasury.Customers do
   end
 
   @doc """
+  Gets all customers in the system.
+  """
+  def get_all_customers() do
+    customers = Repo.all(Customer)
+    {:ok, customers}
+  end
+
+  @doc """
   Gets a customer by username.
   """
   def get_customer_by_username(username) do
