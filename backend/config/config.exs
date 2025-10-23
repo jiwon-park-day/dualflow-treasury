@@ -67,6 +67,7 @@ config :dualflow_treasury, Oban,
   plugins: [
     Oban.Plugins.Pruner,
     # {Oban.Plugins.Cron,
+    #  timezone: "America/Denver",
     #  crontab: [
     #    # Daily Jobs
 
@@ -88,10 +89,12 @@ config :dualflow_treasury, Oban,
     #    {"0 1 1 * *", DualflowTreasury.Jobs.MonthlyInterestPaymentJob, queue: :monthly_operations},
 
     #    # 10th of month, 9:00 AM - Process automatic credit card payments
-    #    {"0 9 10 * *", DualflowTreasury.Jobs.MonthlyCreditCardPaymentJob, queue: :monthly_operations},
+    #    {"0 9 10 * *", DualflowTreasury.Jobs.MonthlyCreditCardPaymentJob,
+    #     queue: :monthly_operations},
 
     #    # 15th of month, 11:59 PM - Close credit card statements
-    #    {"59 23 15 * *", DualflowTreasury.Jobs.MonthlyCreditCardStatementClosingJob, queue: :monthly_operations}
+    #    {"59 23 15 * *", DualflowTreasury.Jobs.MonthlyCreditCardStatementClosingJob,
+    #     queue: :monthly_operations}
     #  ]}
   ],
   queues: [

@@ -185,24 +185,14 @@ defmodule DualflowTreasury.Accounts do
   end
 
   # Gets cumulative interest for a specific date.
-  # Returns 0 if date is before account creation.
+  # Returns 0 if snapshot doesn't exist.
   defp get_account_cumulative_interest(account_id, date) do
     case get_account_daily_snapshot(account_id, date) do
       {:ok, snapshot} ->
         {:ok, snapshot.cumulative_interest}
 
       {:error, :snapshot_not_found} ->
-        with {:ok, account} <- get_account(account_id) do
-          account_created_date = account.inserted_at |> NaiveDateTime.to_date()
-
-          # Return 0 for dates before account creation (expected edge case)
-          if Date.compare(date, account_created_date) == :lt do
-            {:ok, Decimal.new("0.00")}
-          else
-            # Real error - snapshot should exist for dates after account creation
-            {:error, :snapshot_not_found}
-          end
-        end
+        {:ok, Decimal.new("0.00")}
     end
   end
 
@@ -257,16 +247,14 @@ defmodule DualflowTreasury.Accounts do
                 "Interest payment not found for account #{account_id}, period #{period_end_date}. Carrying forward cumulative."
               )
 
-              case get_account_cumulative_interest(account_id, period_end_date) do
-                {:ok, amount} -> amount
-                {:error, :snapshot_not_found} -> Decimal.new("0.00")
+              with {:ok, amount} <- get_account_cumulative_interest(account_id, period_end_date) do
+                amount
               end
           end
         else
           # Add previous day's cumulative interest for normal days
-          case get_account_cumulative_interest(account_id, Date.add(date, -1)) do
-            {:ok, amount} -> amount
-            {:error, :snapshot_not_found} -> Decimal.new("0.00")
+          with {:ok, amount} <- get_account_cumulative_interest(account_id, Date.add(date, -1)) do
+            amount
           end
         end
 
