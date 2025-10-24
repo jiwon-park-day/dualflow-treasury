@@ -1,4 +1,4 @@
-defmodule DualflowTreasury.TreasuryTest do
+defmodule DualflowTreasury.CsvDataValidationTest do
   use DualflowTreasury.DataCase
 
   describe "CSV file verification" do

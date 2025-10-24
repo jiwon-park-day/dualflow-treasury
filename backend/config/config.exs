@@ -7,6 +7,8 @@
 # General application configuration
 import Config
 
+config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
+
 config :dualflow_treasury,
   ecto_repos: [DualflowTreasury.Repo],
   generators: [timestamp_type: :utc_datetime]
@@ -59,6 +61,49 @@ config :logger, :default_formatter,
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
+
+# Configure Oban
+# Replaces basic Oban.Plugins.Cron in plugins list
+config :dualflow_treasury, Oban,
+  repo: DualflowTreasury.Repo,
+  plugins: [
+    Oban.Plugins.Pruner,
+    {Oban.Plugins.Cron,
+     timezone: "America/Denver",
+     crontab: [
+       # Daily Jobs
+
+       # 12:00 AM - Calculate daily interest and create snapshots
+       {"0 0 * * *", DualflowTreasury.Jobs.DailyInterestJob, queue: :daily_operations},
+
+       # 7:00 AM - Settle next-day transfers (INV → CHK)
+       {"0 7 * * *", DualflowTreasury.Jobs.DailyInvToChkSettlementJob, queue: :daily_operations},
+
+       # 7:00 PM - Make daily transfer decisions
+       {"0 19 * * *", DualflowTreasury.Jobs.DailyTransferDecisionJob, queue: :daily_operations},
+
+       # 10:00 PM - Settle same-day transfers (CHK → INV)
+       {"0 22 * * *", DualflowTreasury.Jobs.DailyChkToInvSettlementJob, queue: :daily_operations},
+
+       # Monthly Jobs
+
+       # 1st of month, 1:00 AM - Process monthly interest payments
+       {"0 1 1 * *", DualflowTreasury.Jobs.MonthlyInterestPaymentJob, queue: :monthly_operations},
+
+       # 10th of month, 9:00 AM - Process automatic credit card payments
+       {"0 9 10 * *", DualflowTreasury.Jobs.MonthlyCreditCardPaymentJob,
+        queue: :monthly_operations},
+
+       # 15th of month, 11:59 PM - Close credit card statements
+       {"59 23 15 * *", DualflowTreasury.Jobs.MonthlyStatementClosingJob,
+        queue: :monthly_operations}
+     ]}
+  ],
+  queues: [
+    daily_operations: 10,
+    monthly_operations: 5,
+    simulation: 3
+  ]
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

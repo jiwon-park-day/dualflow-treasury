@@ -8,7 +8,6 @@ defmodule DualflowTreasury.Treasury do
   - Transfer decision algorithm
   - Two-phase transfer settlement
   - Transaction history queries
-
   """
 
   import Ecto.Query, warn: false
@@ -28,7 +27,6 @@ defmodule DualflowTreasury.Treasury do
 
   ## Example
       Treasury.import_historical_transactions(customer_id, "priv/repo/seeds/user_1.csv")
-
   """
   def import_historical_transactions(customer_id, csv_path) do
     Repo.transaction(fn ->
@@ -58,7 +56,6 @@ defmodule DualflowTreasury.Treasury do
   Parses a CSV file into a list of transaction maps.
 
   Expected CSV format: date, amount, merchant_id, description, category, is_recurring
-
   """
   def parse_transaction_csv(csv_path) do
     transaction_list =
@@ -92,6 +89,23 @@ defmodule DualflowTreasury.Treasury do
     |> Repo.insert()
   end
 
+  def create_interest_payment_transaction(account_id, date, amount) do
+    attrs =
+      %{
+        date: date,
+        amount: amount,
+        merchant_id: "INTEREST_PAYMENT",
+        # "Interest payment for mm/yyyy?"
+        description: "Interest payment ...",
+        # "interest_payment"?
+        category: "interest",
+        is_recurring: false,
+        account_id: account_id
+      }
+
+    create_transaction(attrs)
+  end
+
   # Updates a transaction's date.
   # Used when settling pending transfers.
   defp update_transaction_date(transaction_id, new_date) do
@@ -111,7 +125,6 @@ defmodule DualflowTreasury.Treasury do
   1. Creating the transaction record
   2. Updating the account balance
   3. Processing recurring bill detection if applicable
-
   """
   def process_transaction(transaction_data) do
     Repo.transaction(fn ->
@@ -142,7 +155,6 @@ defmodule DualflowTreasury.Treasury do
 
   @doc """
   Gets all transactions for an account, ordered by date (newest first).
-
   """
   def get_account_transactions(account_id) do
     transactions =
@@ -157,7 +169,6 @@ defmodule DualflowTreasury.Treasury do
   @doc """
   Gets all transactions for an account within a date range.
   Returns a list of transactions
-
   """
   def get_account_transactions(account_id, start_date, end_date) do
     transactions =
@@ -173,7 +184,6 @@ defmodule DualflowTreasury.Treasury do
   @doc """
   Gets all transactions for an account by category.
   Returns a list of transactions.
-
   """
   def get_account_transactions_by_category(account_id, category) do
     transactions =
@@ -204,8 +214,21 @@ defmodule DualflowTreasury.Treasury do
   end
 
   @doc """
-  Gets all transfer decision for a customer, ordered by date (newest first).
+  Gets all transfer decisions for a specific date.
 
+  Used by settlement jobs to process pending transfers.
+  """
+  def get_transfer_decisions_for_date(date) do
+    decisions =
+      TransferDecision
+      |> where([d], d.date == ^date)
+      |> Repo.all()
+
+    {:ok, decisions}
+  end
+
+  @doc """
+  Gets all transfer decision for a customer, ordered by date (newest first).
   """
   def get_customer_transfer_decisions(customer_id) do
     with {:ok, accounts} <- Accounts.get_customer_accounts(customer_id) do
@@ -223,7 +246,6 @@ defmodule DualflowTreasury.Treasury do
 
   @doc """
   Gets transfer decisions within a date range for a customer.
-
   """
   def get_customer_transfer_decisions(customer_id, start_date, end_date) do
     with {:ok, accounts} <- Accounts.get_customer_accounts(customer_id) do
@@ -250,7 +272,6 @@ defmodule DualflowTreasury.Treasury do
   - Tomorrow's needs = predicted bills + target balance
   - If checking > needs: transfer excess to investment
   - If checking < needs: transfer shortfall from investment
-
   """
   def make_daily_transfer_decision(customer_id, date) do
     with {:ok, investment} <- Accounts.get_customer_investment_account(customer_id),
@@ -306,7 +327,6 @@ defmodule DualflowTreasury.Treasury do
   2. Creates source transaction with date
   3. Creates destination transaction with date = nil (pending)
   4. Records transfer decision
-
   """
   def initiate_transfer(
         date,
@@ -365,7 +385,6 @@ defmodule DualflowTreasury.Treasury do
   2. Updates destination transaction date from nil to actual settlement date
 
   Called by scheduled jobs based on transfer direction.
-
   """
   def settle_pending_transfer(to_account_id, date, amount, dest_transaction_id) do
     Repo.transaction(fn ->
