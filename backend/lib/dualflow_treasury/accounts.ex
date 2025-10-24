@@ -13,6 +13,7 @@ defmodule DualflowTreasury.Accounts do
   require Logger
   alias DualflowTreasury.Repo
   alias DualflowTreasury.Accounts.{Account, AccountDailySnapshot, InterestPayment}
+  alias DualflowTreasury.Treasury
 
   # Account CRUD
 
@@ -324,8 +325,7 @@ defmodule DualflowTreasury.Accounts do
       {:error, :not_first_day_of_month}
     else
       Repo.transaction(fn ->
-        with {:ok, cumulative_interest} <-
-               get_account_cumulative_interest(account_id, period_end_date),
+        with {:ok, cumulative_interest} <- get_account_cumulative_interest(account_id, period_end_date),
              {:ok, _account} <- adjust_account_balance(account_id, cumulative_interest),
              {:ok, payment} <-
                create_interest_payment(%{
@@ -333,7 +333,8 @@ defmodule DualflowTreasury.Accounts do
                  period_end_date: period_end_date,
                  amount: cumulative_interest,
                  account_id: account_id
-               }) do
+               }),
+               {:ok, _transaction} <- Treasury.create_interest_payment_transaction(account_id, payment.payment_date, payment.amount) do
           payment
         else
           {:error, reason} -> Repo.rollback(reason)

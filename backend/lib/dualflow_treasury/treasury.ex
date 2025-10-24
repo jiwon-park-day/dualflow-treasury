@@ -89,6 +89,23 @@ defmodule DualflowTreasury.Treasury do
     |> Repo.insert()
   end
 
+  def create_interest_payment_transaction(account_id, date, amount) do
+    attrs =
+      %{
+        date: date,
+        amount: amount,
+        merchant_id: "INTEREST_PAYMENT",
+        # "Interest payment for mm/yyyy?"
+        description: "Interest payment ...",
+        # "interest_payment"?
+        category: "interest",
+        is_recurring: false,
+        account_id: account_id
+      }
+
+    create_transaction(attrs)
+  end
+
   # Updates a transaction's date.
   # Used when settling pending transfers.
   defp update_transaction_date(transaction_id, new_date) do

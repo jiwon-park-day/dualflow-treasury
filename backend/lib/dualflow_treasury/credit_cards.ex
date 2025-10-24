@@ -250,46 +250,52 @@ defmodule DualflowTreasury.CreditCards do
   Pays full statement balance automatically.
 
   Called on payment due day (10th of month):
-  1. Debits checking account for statement balance amount
-  2. Credits credit card (creates negative transaction)
-  3. Resets statement_balance to zero
+  1. Checks if statement balance is zero (skip if true)
+  2. Debits checking account for statement balance amount
+  3. Credits credit card (creates negative transaction)
+  4. Resets statement_balance to zero
 
   All operations wrapped in a database transaction for atomicity.
   """
   def process_automatic_credit_card_payment(card_id, payment_date) do
-    Repo.transaction(fn ->
-      with {:ok, card} <- get_credit_card(card_id),
-           {:ok, account} <- Accounts.get_customer_checking_account(card.customer_id),
-
-           # Create checking transaction (debit)
-           {:ok, _transaction} <-
-             Treasury.process_transaction(%{
-               account_id: account.id,
-               date: payment_date,
-               amount: Decimal.negate(card.statement_balance),
-               merchant_id: @default_merchant_id,
-               description: "Credit Card Payment - Auto",
-               category: "credit_card_payment",
-               is_recurring: false
-             }),
-
-           # Create credit card transaction
-           {:ok, cc_transaction} <-
-             create_credit_card_transaction(%{
-               credit_card_id: card_id,
-               amount: Decimal.negate(card.statement_balance),
-               description: "Payment - Auto",
-               transaction_date: payment_date,
-               category: "payment"
-             }),
-
-           # Reset statement balance
-           {:ok, _card} <- update_credit_card_statement_balance(card_id, Decimal.new("0.00")) do
-        cc_transaction
+    with {:ok, card} <- get_credit_card(card_id) do
+      if Decimal.equal?(card.statement_balance, Decimal.new("0.00")) do
+        {:ok, :no_payment_needed}
       else
-        {:error, reason} -> Repo.rollback(reason)
+        Repo.transaction(fn ->
+          with {:ok, account} <- Accounts.get_customer_checking_account(card.customer_id),
+
+               # Create checking transaction (debit)
+               {:ok, _transaction} <-
+                 Treasury.process_transaction(%{
+                   account_id: account.id,
+                   date: payment_date,
+                   amount: Decimal.negate(card.statement_balance),
+                   merchant_id: @default_merchant_id,
+                   description: "Credit Card Payment - Auto",
+                   category: "credit_card_payment",
+                   is_recurring: false
+                 }),
+
+               # Create credit card transaction
+               {:ok, cc_transaction} <-
+                 create_credit_card_transaction(%{
+                   credit_card_id: card_id,
+                   amount: Decimal.negate(card.statement_balance),
+                   description: "Payment - Auto",
+                   transaction_date: payment_date,
+                   category: "payment"
+                 }),
+
+               # Reset statement balance
+               {:ok, _card} <- update_credit_card_statement_balance(card_id, Decimal.new("0.00")) do
+            cc_transaction
+          else
+            {:error, reason} -> Repo.rollback(reason)
+          end
+        end)
       end
-    end)
+    end
   end
 
   @doc """
