@@ -67,6 +67,7 @@ defmodule DualflowTreasury.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       # Additional dependencies
+      {:tzdata, "~> 1.1"},          # Timezone
       {:oban, "~> 2.19"},           # Job scheduling
       {:decimal, "~> 2.0"},         # Precise decimal calculations
       # {:bcrypt_elixir, "~> 3.0"},
