@@ -325,19 +325,30 @@ defmodule DualflowTreasury.Accounts do
       {:error, :not_first_day_of_month}
     else
       Repo.transaction(fn ->
-        with {:ok, cumulative_interest} <- get_account_cumulative_interest(account_id, period_end_date),
-             {:ok, _account} <- adjust_account_balance(account_id, cumulative_interest),
-             {:ok, payment} <-
-               create_interest_payment(%{
-                 payment_date: payment_date,
-                 period_end_date: period_end_date,
-                 amount: cumulative_interest,
-                 account_id: account_id
-               }),
-               {:ok, _transaction} <- Treasury.create_interest_payment_transaction(account_id, payment.payment_date, payment.amount) do
-          payment
-        else
-          {:error, reason} -> Repo.rollback(reason)
+        with {:ok, cumulative_interest} <-
+               get_account_cumulative_interest(account_id, period_end_date) do
+          if Decimal.equal?(cumulative_interest, Decimal.new("0.00")) do
+            {:ok, :no_interest_to_pay}
+          else
+            with {:ok, _account} <- adjust_account_balance(account_id, cumulative_interest),
+                 {:ok, payment} <-
+                   create_interest_payment(%{
+                     payment_date: payment_date,
+                     period_end_date: period_end_date,
+                     amount: cumulative_interest,
+                     account_id: account_id
+                   }),
+                 {:ok, _transaction} <-
+                   Treasury.create_interest_payment_transaction(
+                     account_id,
+                     payment.payment_date,
+                     payment.amount
+                   ) do
+              payment
+            else
+              {:error, reason} -> Repo.rollback(reason)
+            end
+          end
         end
       end)
     end
