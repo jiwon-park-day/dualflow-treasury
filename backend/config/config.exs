@@ -71,7 +71,7 @@ config :dualflow_treasury, Oban,
     {Oban.Plugins.Cron,
      timezone: "America/Denver",
      crontab: [
-       # Daily Jobs
+       # Daily System Jobs
 
        # 12:00 AM - Calculate daily interest and create snapshots
        {"0 0 * * *", DualflowTreasury.Jobs.DailyInterestJob, queue: :daily_operations},
@@ -85,7 +85,7 @@ config :dualflow_treasury, Oban,
        # 10:00 PM - Settle same-day transfers (CHK → INV)
        {"0 22 * * *", DualflowTreasury.Jobs.DailyChkToInvSettlementJob, queue: :daily_operations},
 
-       # Monthly Jobs
+       # Monthly System Jobs
 
        # 1st of month, 1:00 AM - Process monthly interest payments
        {"0 1 1 * *", DualflowTreasury.Jobs.MonthlyInterestPaymentJob, queue: :monthly_operations},
@@ -96,7 +96,13 @@ config :dualflow_treasury, Oban,
 
        # 15th of month, 11:59 PM - Close credit card statements
        {"59 23 15 * *", DualflowTreasury.Jobs.MonthlyStatementClosingJob,
-        queue: :monthly_operations}
+        queue: :monthly_operations},
+
+       # Simulation Job
+
+       # 9:00 AM - Inject transactions
+       {"0 9 * * *", DualflowTreasury.Simulator.Jobs.TransactionInjectionJob, queue: :simulation}
+
      ]}
   ],
   queues: [

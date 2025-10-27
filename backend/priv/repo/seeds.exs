@@ -10,7 +10,7 @@
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
 
-alias DualflowTreasury.{Customers, Accounts, Treasury, Billing, CreditCards}
+alias DualflowTreasury.{Customers, Accounts, Treasury, Billing, CreditCards, Simulator}
 alias DualflowTreasury.Repo
 
 
@@ -118,9 +118,9 @@ IO.puts("   Payment Due Day: #{card.payment_due_day}")
 IO.puts("\n")
 IO.puts("Importing historical transactions...")
 
-csv_path = Path.join([__DIR__, "seeds", "user_1_test_user.csv"])
+csv_path = Path.join([__DIR__, "seeds", "test_corp", "historical_checking_transactions.csv"])
 
-case Treasury.import_historical_transactions(customer.id, csv_path) do
+case Simulator.import_historical_transactions(customer.id, csv_path) do
   {:ok, transactions} ->
     IO.puts("\n")
     IO.puts("   Imported #{length(transactions)} transactions")

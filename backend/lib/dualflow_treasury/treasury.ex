@@ -3,7 +3,6 @@ defmodule DualflowTreasury.Treasury do
   Context for transaction processing and money movement.
 
   Handles:
-  - Historical transaction import
   - Transaction creation and processing
   - Transfer decision algorithm
   - Two-phase transfer settlement
@@ -15,69 +14,6 @@ defmodule DualflowTreasury.Treasury do
   alias DualflowTreasury.Repo
   alias DualflowTreasury.{Accounts, Billing, Customers}
   alias DualflowTreasury.Treasury.{Transaction, TransferDecision}
-  alias NimbleCSV.RFC4180, as: CSV
-
-  # Data import & parse
-
-  @doc """
-  Imports historical transactions from a CSV file.
-
-  Processes transactions chronologically.
-  All transactions are wrapped in a single database transaction for atomicity.
-
-  ## Example
-      Treasury.import_historical_transactions(customer_id, "priv/repo/seeds/user_1.csv")
-  """
-  def import_historical_transactions(customer_id, csv_path) do
-    Repo.transaction(fn ->
-      with {:ok, checking} <- Accounts.get_customer_checking_account(customer_id),
-           {:ok, transaction_list} <- parse_transaction_csv(csv_path) do
-        transaction_list
-        |> Enum.sort(fn t1, t2 -> Date.compare(t1.date, t2.date) != :gt end)
-        |> Enum.reduce_while([], fn txn_data, acc ->
-          txn_data = Map.put(txn_data, :account_id, checking.id)
-
-          case process_transaction(txn_data) do
-            {:ok, txn} -> {:cont, [txn | acc]}
-            {:error, reason} -> {:halt, {:error, reason}}
-          end
-        end)
-        |> case do
-          {:error, reason} -> Repo.rollback(reason)
-          transactions -> Enum.reverse(transactions)
-        end
-      else
-        {:error, reason} -> Repo.rollback(reason)
-      end
-    end)
-  end
-
-  @doc """
-  Parses a CSV file into a list of transaction maps.
-
-  Expected CSV format: date, amount, merchant_id, description, category, is_recurring
-  """
-  def parse_transaction_csv(csv_path) do
-    transaction_list =
-      csv_path
-      |> File.stream!()
-      |> CSV.parse_stream(skip_headers: false)
-
-      # Skip header row
-      |> Stream.drop(1)
-      |> Enum.map(fn [date, amount, merchant_id, description, category, is_recurring] ->
-        %{
-          date: Date.from_iso8601!(date),
-          amount: Decimal.new(amount),
-          merchant_id: merchant_id,
-          description: description,
-          category: category,
-          is_recurring: is_recurring == "true" || is_recurring == "TRUE"
-        }
-      end)
-
-    {:ok, transaction_list}
-  end
 
   # Transactions
 
@@ -89,16 +25,17 @@ defmodule DualflowTreasury.Treasury do
     |> Repo.insert()
   end
 
-  def create_interest_payment_transaction(account_id, date, amount) do
+  def create_interest_payment_transaction(account_id, payment_date, amount) do
+    period_end_date = Date.add(payment_date, -1)
+    month_year = Calendar.strftime(period_end_date, "%b %Y")
+
     attrs =
       %{
-        date: date,
+        date: payment_date,
         amount: amount,
         merchant_id: "INTEREST_PAYMENT",
-        # "Interest payment for mm/yyyy?"
-        description: "Interest payment ...",
-        # "interest_payment"?
-        category: "interest",
+        description: "Interest Earned - #{month_year}",
+        category: "interest_payment",
         is_recurring: false,
         account_id: account_id
       }
@@ -344,7 +281,7 @@ defmodule DualflowTreasury.Treasury do
                date: date,
                amount: Decimal.negate(transfer_amount),
                merchant_id: "INTERNAL_TRANSFER",
-               description: "Transfer to optimization account",
+               description: "Optimization Transfer Out",
                category: "transfer",
                is_recurring: false,
                account_id: from_account_id
@@ -355,7 +292,7 @@ defmodule DualflowTreasury.Treasury do
                date: nil,
                amount: transfer_amount,
                merchant_id: "INTERNAL_TRANSFER",
-               description: "Transfer from optimization",
+               description: "Optimization Transfer In",
                category: "transfer",
                is_recurring: false,
                account_id: to_account_id
@@ -386,10 +323,11 @@ defmodule DualflowTreasury.Treasury do
 
   Called by scheduled jobs based on transfer direction.
   """
-  def settle_pending_transfer(to_account_id, date, amount, dest_transaction_id) do
+  def settle_pending_transfer(to_account_id, settlement_date, amount, dest_transaction_id) do
     Repo.transaction(fn ->
       with {:ok, _to_account} <- Accounts.adjust_account_balance(to_account_id, amount),
-           {:ok, dest_transaction} <- update_transaction_date(dest_transaction_id, date) do
+           {:ok, dest_transaction} <-
+             update_transaction_date(dest_transaction_id, settlement_date) do
         dest_transaction
       else
         {:error, reason} -> Repo.rollback(reason)
