@@ -53,7 +53,7 @@ defmodule DualflowTreasuryWeb.Endpoint do
 
   # CORS config
   plug CORSPlug,
-  origin: ["http://localhost:3000"],  # Your React dev server
+  origin: ["http://localhost:3000"],
   credentials: true,
   headers: ["Content-Type", "Authorization"]
 
