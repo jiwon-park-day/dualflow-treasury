@@ -21,20 +21,21 @@ defmodule DualflowTreasuryWeb.Router do
   end
 
   # API
-  scope "/api", DualflowTreasuryWeb do
+  scope "/api", DualflowTreasuryWeb.API do
     pipe_through :api
 
-    # Customers
-
-    # Accounts
-
-    # Treasury
-
-    # Billing
-
-    # CreditCards
-
-
+    get "/dashboard", DashboardController, :show
+    get "/credit-card", CreditCardController, :show
+    get "/banking", BankingController, :show
+    get "/accounts/investment", AccountController, :show_investment
+    get "/accounts/checking", AccountController, :show_checking
+    patch "/accounts/checking/target-balance", AccountController, :update_target_balance
+    get "/settings", SettingsController, :show
+    patch "/settings/profile", SettingsController, :update_profile
+    put "/settings/password", SettingsController, :update_password
+    patch "/settings/auto-transfer", SettingsController, :toggle_auto_transfer
+    patch "/settings/target-balance", SettingsController, :update_target_balance
+    patch "/settings/credit-card", SettingsController, :update_credit_card
   end
 
   # Simulator (Admin-only)

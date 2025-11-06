@@ -12,7 +12,7 @@ defmodule DualflowTreasury.Treasury do
   import Ecto.Query, warn: false
   require Logger
   alias DualflowTreasury.Repo
-  alias DualflowTreasury.{Accounts, Billing, Customers}
+  alias DualflowTreasury.{Customers, Accounts, Billing}
   alias DualflowTreasury.Treasury.{Transaction, TransferDecision}
 
   # Transactions
@@ -25,6 +25,12 @@ defmodule DualflowTreasury.Treasury do
     |> Repo.insert()
   end
 
+  @doc """
+  Creates a transaction record for monthly interest payments.
+
+  Called by Accounts context when processing monthly interest payouts.
+  Amount should be positive (credit to account).
+  """
   def create_interest_payment_transaction(account_id, payment_date, amount) do
     period_end_date = Date.add(payment_date, -1)
     month_year = Calendar.strftime(period_end_date, "%b %Y")
